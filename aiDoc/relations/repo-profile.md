@@ -19,7 +19,7 @@
 ## 后端技术栈
 
 - Go
-- Gin
+- go-zero
 - GORM
 - Casbin
 - Viper

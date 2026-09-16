@@ -36,7 +36,7 @@ Explore the [licensed edition demo](https://vip.gin-vue-admin.com) to see the co
 
 ### 1.1 Project Introduction
 
-> Gin-vue-admin is a backstage management system based on [vue](https://vuejs.org) and [gin](https://gin-gonic.com), which separates the front and rear of the full stack. It integrates jwt authentication, dynamic routing, dynamic menu, casbin authentication, form generator, code generator and other functions. It provides a variety of sample files, allowing you to focus more time on business development.
+> Gin-vue-admin is a backstage management system based on [vue](https://vuejs.org) and [go-zero](https://github.com/zeromicro/go-zero), which separates the front and rear of the full stack. It integrates jwt authentication, dynamic routing, dynamic menu, casbin authentication, form generator, code generator and other functions. It provides a variety of sample files, allowing you to focus more time on business development.
 
 ### 1.2 Contributing Guide
 
@@ -168,7 +168,7 @@ swag init
 ## 3. Technical selection
 
 - Frontend: using [Element](https://github.com/ElemeFE/element) based on [Vue](https://vuejs.org)，to code the page.
-- Backend: using [Gin](https://gin-gonic.com/) to quickly build basic RESTful API. [Gin](https://gin-gonic.com/)is a web framework written in Go (Golang).
+- Backend: using [go-zero](https://github.com/zeromicro/go-zero) to quickly build basic RESTful API. [go-zero](https://github.com/zeromicro/go-zero) is a web framework written in Go (Golang).
 - DB: `MySql`(5.6.44)，using [gorm](http://gorm.io)` to implement data manipulation, added support for SQLite databases.
 - Cache: using `Redis` to implement the recording of the JWT token of the currently active user and implement the multi-login restriction.
 - API: using Swagger to auto generate APIs docs。

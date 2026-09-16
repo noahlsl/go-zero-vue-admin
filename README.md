@@ -82,7 +82,7 @@
 
 ### 1.1 项目介绍
 
-> Gin-vue-admin是一个基于 [vue](https://vuejs.org) 和 [gin](https://gin-gonic.com) 开发的全栈前后端分离的开发基础平台，集成jwt鉴权，动态路由，动态菜单，casbin鉴权，表单生成器，代码生成器等功能，提供多种示例文件，让您把更多时间专注在业务开发上。
+> Gin-vue-admin是一个基于 [vue](https://vuejs.org) 和 [go-zero](https://github.com/zeromicro/go-zero) 开发的全栈前后端分离的开发基础平台，集成jwt鉴权，动态路由，动态菜单，casbin鉴权，表单生成器，代码生成器等功能，提供多种示例文件，让您把更多时间专注在业务开发上。
 
 ### 1.2 贡献指南
 
@@ -174,7 +174,7 @@ swag init
 ## 3. 技术选型
 
 - 前端：用基于 [Vue](https://vuejs.org) 的 [Element](https://github.com/ElemeFE/element) 构建基础页面。
-- 后端：用 [Gin](https://gin-gonic.com/) 快速搭建基础restful风格API，[Gin](https://gin-gonic.com/) 是一个go语言编写的Web框架。
+- 后端：用 [go-zero](https://github.com/zeromicro/go-zero) 快速搭建基础restful风格API，[go-zero](https://github.com/zeromicro/go-zero) 是一个go语言编写的Web框架。
 - 数据库：采用 `MySQL` 或 `MariaDB`（5.7+），数据库引擎 InnoDB，使用 [gorm](http://gorm.cn) 实现对数据库的基本操作。
 - 缓存：使用 `Redis` 实现记录当前活跃用户的 jwt 令牌并实现多点登录限制。
 - API文档：使用 `Swagger` 构建自动化文档。

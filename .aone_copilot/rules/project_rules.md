@@ -17,7 +17,7 @@ description: |
   - @vueuse/core Vue组合式API工具集
   
   后端技术栈：
-  - Go 1.23 + Gin 1.10.0 Web框架
+  - Go 1.23 + go-zero 1.10.0 Web框架
   - GORM 1.25.12 ORM框架
   - Casbin 2.103.0 权限管理
   - Viper 1.19.0 配置管理
@@ -74,7 +74,7 @@ description: |
 ### **整体架构**
 
 gin-vue-admin 采用前后端分离架构：
-- **后端 (server/)**：基于 Go + Gin 的 RESTful API 服务
+- **后端 (server/)**：基于 Go + go-zero 的 RESTful API 服务
 - **前端 (web/)**：基于 Vue 3 + Vite 的单页面应用
 - **部署 (deploy/)**：Docker、Kubernetes 等部署配置
 
