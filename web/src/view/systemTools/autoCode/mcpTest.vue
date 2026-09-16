@@ -317,7 +317,7 @@ const emptyStatus = () => ({
   healthURL: 'http://127.0.0.1:8889/health',
   listenAddr: ':8889',
   path: '/mcp',
-  authHeader: 'x-token',
+  authHeader: 'Authorization',
   startedAt: '',
   lastError: '',
   message: 'MCP 独立服务未启动'
@@ -328,7 +328,7 @@ const defaultServerConfig = {
     gva: {
       url: 'http://127.0.0.1:8889/mcp',
       headers: {
-        'x-token': ''
+        'Authorization': ''
       }
     }
   }
@@ -352,9 +352,9 @@ const buildMcpServerConfig = (config) => {
 
   if (serverName) {
     const headers = nextConfig.mcpServers[serverName].headers || {}
-    const headerKeys = Object.keys(headers).length ? Object.keys(headers) : ['x-token']
+    const headerKeys = Object.keys(headers).length ? Object.keys(headers) : ['Authorization']
     nextConfig.mcpServers[serverName].headers = Object.fromEntries(
-      headerKeys.map((key) => [key, userStore.token || ''])
+      headerKeys.map((key) => [key, key === 'Authorization' ? 'Bearer ' + (userStore.token || '') : (userStore.token || '')])
     )
   }
 

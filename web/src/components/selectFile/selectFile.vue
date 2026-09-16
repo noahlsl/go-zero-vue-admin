@@ -11,7 +11,7 @@
       :limit="limit"
       :accept="accept"
       class="upload-btn"
-      :headers="{'x-token': token}"
+      :headers="{'Authorization': 'Bearer ' + token}"
     >
       <el-button type="primary"> 上传文件 </el-button>
     </el-upload>

@@ -131,7 +131,7 @@ service.interceptors.request.use(
     const userStore = useUserStore()
     config.headers = {
       'Content-Type': 'application/json',
-      'x-token': userStore.token,
+      'Authorization': 'Bearer ' + userStore.token,
       'x-user-id': userStore.userInfo.ID,
       ...config.headers
     }

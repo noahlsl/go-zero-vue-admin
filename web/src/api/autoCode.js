@@ -77,7 +77,7 @@ const createLLMFetchHeaders = (extraHeaders = {}) => {
   return {
     'Content-Type': 'application/json',
     Accept: 'text/event-stream',
-    'x-token': userStore.token || '',
+    'Authorization': 'Bearer ' + (userStore.token || ''),
     'x-user-id': userStore.userInfo.ID || userStore.userInfo.id || '',
     ...extraHeaders
   }

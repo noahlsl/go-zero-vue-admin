@@ -249,12 +249,12 @@ const openCurl = (row) => {
     // 构造示例 URL
     const url = `${origin}/api/menu/getMenu`
     
-    curlHeader.value = `curl -X POST "${url}" \ 
-  -H "x-token: ${row.token}" \ 
+    curlHeader.value = `curl -X POST "${url}" \
+  -H "Authorization: Bearer ${row.token}" \
   -H "Content-Type: application/json"`
-    
-    curlCookie.value = `curl -X POST "${url}" \ 
-  -b "x-token=${row.token}" \ 
+
+    curlCookie.value = `curl -X POST "${url}" \
+  -b "x-token=${row.token}" \
   -H "Content-Type: application/json"`
 
     curlDrawerVisible.value = true

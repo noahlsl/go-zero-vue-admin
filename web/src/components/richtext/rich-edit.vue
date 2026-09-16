@@ -56,7 +56,7 @@
     fieldName: 'file',
     server: basePath + '/fileUploadAndDownload/upload?noSave=1',
     headers: {
-      'x-token': userStore.token,
+      'Authorization': 'Bearer ' + userStore.token,
     },
     customInsert(res, insertFn) {
       if (res.code === 0) {

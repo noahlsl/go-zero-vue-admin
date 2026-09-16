@@ -7,7 +7,7 @@
       :on-success="uploadSuccess"
       :show-file-list="false"
       :data="{'classId': props.classId}"
-      :headers="{'x-token': token}"
+      :headers="{'Authorization': 'Bearer ' + token}"
       multiple
       class="upload-btn"
     >

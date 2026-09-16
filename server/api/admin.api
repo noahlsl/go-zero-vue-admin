@@ -1,0 +1,3470 @@
+syntax = "v1"
+
+info (
+	title:  "go-zero-vue-admin api"
+	desc:   "go-zero-vue-admin 后端API接口定义"
+	author: "go-zero-vue-admin"
+	date:   "2024-01-01"
+)
+
+// 通用类型定义
+type (
+	// Response 通用响应结构体
+	// 用于所有接口的统一响应格式
+	Response {
+		// Code 状态码，0表示成功，7表示失败
+		Code int `json:"code"`
+		// Data 响应数据，可以是任意类型
+		Data interface{} `json:"data"`
+		// Msg 响应消息，描述操作结果
+		Msg string `json:"msg"`
+	}
+	// SqlPreviewRes SQL预览响应
+	// key 与原 Gin 的 gin.H{"sql": ...} 一致
+	SqlPreviewRes {
+		// Sql 预览生成的 SQL
+		Sql string `json:"sql"`
+	}
+	// PageInfo 分页请求参数
+	// 用于列表查询的分页参数
+	PageInfo {
+		// Page 页码，从1开始
+		// form tag 供 httpx.Parse 解析 GET query，json tag 供 JSON body 解析，两者都必须为 optional
+		Page int `json:"page,optional" form:"page,optional"`
+		// PageSize 每页数量，默认10，最大100
+		PageSize int `json:"pageSize,optional" form:"pageSize,optional"`
+		// Keyword 搜索关键字，可选参数
+		Keyword string `json:"keyword,optional" form:"keyword,optional"`
+	}
+	// PageResult 分页响应结果
+	// 包含分页查询的返回数据
+	PageResult {
+		// List 数据列表
+		List interface{} `json:"list"`
+		// Total 总记录数
+		Total int64 `json:"total"`
+		// Page 当前页码
+		Page int `json:"page"`
+		// PageSize 每页数量
+		PageSize int `json:"pageSize"`
+	}
+	// GetById 根据ID查询请求
+	// 用于单个资源的查询和删除操作
+	GetById {
+		// ID 资源ID
+		// 原 Gin 接口统一使用大写 ID 作为 query key，故 form tag 必须为大写 ID
+		ID int `json:"id,optional" form:"ID,optional"`
+	}
+	// GetByLowerId 小写 id 查询请求
+	// 兼容原 Gin 中 query key 为全小写 id 的接口（getSysErrorSolution / getDictionaryPath）
+	GetByLowerId {
+		// ID 资源ID
+		ID int `json:"id,optional" form:"id,optional"`
+	}
+	// IdsReq 批量删除请求
+	// 用于批量删除操作
+	IdsReq {
+		// Ids 资源ID列表
+		Ids []int `json:"ids"`
+	}
+)
+
+// 系统模块类型定义
+type (
+	// LoginReq 登录请求参数
+	// 用户登录时提交的表单数据
+	LoginReq {
+		// Username 用户名
+		Username string `json:"username"`
+		// Password 密码
+		Password string `json:"password"`
+		// Captcha 验证码
+		Captcha string `json:"captcha,optional"`
+		// CaptchaId 验证码ID
+		CaptchaId string `json:"captchaId,optional"`
+	}
+	// LoginResp 登录响应结果
+	// 登录成功后返回的数据
+	LoginResp {
+		// User 用户信息
+		User SysUser `json:"user"`
+		// Token JWT令牌
+		Token string `json:"token"`
+		// ExpiresAt 令牌过期时间戳（毫秒）
+		ExpiresAt int64 `json:"expiresAt"`
+	}
+	// RegisterReq 注册请求参数
+	// 管理员注册新用户时提交的数据
+	RegisterReq {
+		// Username 用户名
+		Username string `json:"userName"`
+		// Password 密码
+		Password string `json:"passWord"`
+		// NickName 昵称
+		NickName string `json:"nickName"`
+		// HeaderImg 头像链接，可选参数
+		HeaderImg string `json:"headerImg,optional"`
+		// AuthorityId 角色ID
+		AuthorityId uint `json:"authorityId"`
+		// Enable 是否启用，1启用，0禁用
+		Enable int `json:"enable"`
+		// AuthorityIds 角色ID列表，可选参数
+		AuthorityIds []uint `json:"authorityIds,optional"`
+		// Phone 电话号码，可选参数
+		Phone string `json:"phone,optional"`
+		// Email 电子邮箱，可选参数
+		Email string `json:"email,optional"`
+	}
+	// ChangePasswordReq 修改密码请求参数
+	// 用户修改密码时提交的数据
+	ChangePasswordReq {
+		// Password 原密码
+		Password string `json:"password"`
+		// NewPassword 新密码
+		NewPassword string `json:"newPassword"`
+	}
+	// ResetPasswordReq 重置密码请求参数
+	// 管理员重置用户密码时提交的数据
+	ResetPasswordReq {
+		// ID 用户ID
+		ID uint `json:"ID"`
+		// Password 新密码
+		Password string `json:"password"`
+	}
+	// SetUserAuthReq 设置用户权限请求参数
+	// 更改用户角色时提交的数据
+	SetUserAuthReq {
+		// AuthorityId 角色ID
+		AuthorityId uint `json:"authorityId"`
+	}
+	// SetUserAuthoritiesReq 设置用户权限组请求参数
+	// 批量设置用户角色时提交的数据
+	SetUserAuthoritiesReq {
+		// ID 用户ID
+		ID uint `json:"ID"`
+		// AuthorityIds 角色ID列表
+		AuthorityIds []uint `json:"authorityIds"`
+	}
+	// ChangeUserInfoReq 修改用户信息请求参数
+	// 更新用户信息时提交的数据
+	ChangeUserInfoReq {
+		// ID 用户ID
+		ID uint `json:"id"`
+		// NickName 昵称，可选参数
+		NickName string `json:"nickName,optional"`
+		// Phone 电话号码，可选参数
+		Phone string `json:"phone,optional"`
+		// AuthorityIds 角色ID列表，可选参数
+		AuthorityIds []uint `json:"authorityIds,optional"`
+		// Email 电子邮箱，可选参数
+		Email string `json:"email,optional"`
+		// HeaderImg 头像链接，可选参数
+		HeaderImg string `json:"headerImg,optional"`
+		// Enable 是否启用，可选参数
+		Enable int `json:"enable,optional"`
+	}
+	// GetUserListReq 获取用户列表请求参数
+	// 分页查询用户列表时提交的数据
+	GetUserListReq {
+		// PageInfo 内嵌字段
+		PageInfo
+		// Username 用户名，可选参数
+		Username string `json:"username,optional" form:"username,optional"`
+		// NickName 昵称，可选参数
+		NickName string `json:"nickName,optional" form:"nickName,optional"`
+		// Phone 电话号码，可选参数
+		Phone string `json:"phone,optional" form:"phone,optional"`
+		// Email 电子邮箱，可选参数
+		Email string `json:"email,optional" form:"email,optional"`
+		// OrderKey 排序字段，可选参数
+		OrderKey string `json:"orderKey,optional" form:"orderKey,optional"`
+		// Desc 排序方式，true降序，false升序，可选参数
+		Desc bool `json:"desc,optional" form:"desc,optional"`
+	}
+	// SysUser 系统用户模型
+	// 包含用户的基本信息和关联数据
+	SysUser {
+		// ID 用户ID
+		ID uint `json:"ID"`
+		// CreatedAt 创建时间（RFC3339）
+		CreatedAt string `json:"CreatedAt"`
+		// UpdatedAt 更新时间（RFC3339）
+		UpdatedAt string `json:"UpdatedAt"`
+		// UUID 用户唯一标识
+		UUID string `json:"uuid"`
+		// Username 用户名
+		Username string `json:"userName"`
+		// NickName 昵称
+		NickName string `json:"nickName"`
+		// Password 密码（不返回给前端）
+		Password string `json:"-"`
+		// HeaderImg 头像链接
+		HeaderImg string `json:"headerImg"`
+		// AuthorityId 角色ID
+		AuthorityId uint `json:"authorityId"`
+		// Authority 角色信息
+		Authority SysAuthority `json:"authority"`
+		// Authorities 角色列表
+		Authorities []SysAuthority `json:"authorities"`
+		// Phone 电话号码
+		Phone string `json:"phone"`
+		// Email 电子邮箱
+		Email string `json:"email"`
+		// Enable 是否启用，1启用，0禁用
+		Enable int `json:"enable"`
+		// OriginSetting 原始配置信息
+		OriginSetting interface{} `json:"originSetting"`
+	}
+	// SysUserResponse 用户信息响应
+	// 包装用户信息的响应结构
+	SysUserResponse {
+		// User 用户信息
+		User SysUser `json:"user"`
+	}
+	// UserInfoRes 当前登录用户信息响应
+	// 字段名与原 Gin 后端保持一致，前端通过 data.userInfo 读取
+	UserInfoRes {
+		// UserInfo 用户信息
+		UserInfo SysUser `json:"userInfo"`
+	}
+	// SysAuthority 系统权限模型
+	// 包含角色的基本信息和关联数据
+	SysAuthority {
+		// CreatedAt 创建时间（RFC3339）
+		CreatedAt string `json:"CreatedAt"`
+		// UpdatedAt 更新时间（RFC3339）
+		UpdatedAt string `json:"UpdatedAt"`
+		// AuthorityId 角色ID
+		AuthorityId uint `json:"authorityId"`
+		// AuthorityName 角色名称
+		AuthorityName string `json:"authorityName"`
+		// ParentId 父角色ID
+		ParentId uint `json:"parentId"`
+		// DefaultRouter 默认路由
+		DefaultRouter string `json:"defaultRouter"`
+		// DataScope 数据权限范围
+		DataScope string `json:"dataScope"`
+		// Children 子角色列表
+		Children []SysAuthority `json:"children"`
+		// Menus 菜单列表
+		Menus []SysMenu `json:"menus"`
+		// Local 是否本地角色
+		Local *bool `json:"local"`
+		// AuthorityIdStr 角色ID字符串表示
+		AuthorityIdStr string `json:"authorityIdStr"`
+	}
+	// Meta 菜单元数据
+	// 菜单的附加属性
+	Meta {
+		// Title 菜单标题
+		Title string `json:"title"`
+		// Icon 菜单图标
+		Icon string `json:"icon"`
+		// KeepAlive 是否缓存
+		KeepAlive bool `json:"keepAlive"`
+		// DefaultMenu 是否默认菜单
+		DefaultMenu bool `json:"defaultMenu"`
+		// CloseTab 是否关闭标签页
+		CloseTab bool `json:"closeTab"`
+		// TransitionType 路由切换动画
+		TransitionType string `json:"transitionType"`
+	}
+	// SysMenu 系统菜单模型
+	// 包含菜单的基本信息和配置
+	SysMenu {
+		// ID 菜单ID
+		ID uint `json:"ID"`
+		// CreatedAt 创建时间（RFC3339）
+		CreatedAt string `json:"CreatedAt"`
+		// UpdatedAt 更新时间（RFC3339）
+		UpdatedAt string `json:"UpdatedAt"`
+		// MenuLevel 菜单层级
+		MenuLevel uint `json:"menuLevel"`
+		// ParentId 父菜单ID
+		ParentId uint `json:"parentId"`
+		// Path 路由路径
+		Path string `json:"path"`
+		// Name 路由名称
+		Name string `json:"name"`
+		// Hidden 是否隐藏
+		Hidden bool `json:"hidden"`
+		// Component 组件路径
+		Component string `json:"component"`
+		// Sort 排序号
+		Sort int `json:"sort"`
+		// Meta 菜单元数据
+		Meta Meta `json:"meta"`
+		// AuthorityId 角色ID
+		AuthorityId uint `json:"authorityId"`
+		// Button 按钮列表
+		Button []SysMenuBtn `json:"menuBtn"`
+		// Buttons 按钮权限列表
+		Buttons []SysAuthorityBtn `json:"buttons"`
+		// HideTab 是否隐藏标签页
+		HideTab bool `json:"hideTab"`
+		// MenuId 菜单ID（关联）
+		MenuId uint `json:"menuId"`
+		// Children 子菜单列表
+		Children []SysMenu `json:"children"`
+		// Parameters 菜单参数列表
+		Parameters []SysMenuParameter `json:"parameters"`
+	}
+	// SysMenuBtn 系统菜单按钮模型
+	// 菜单下的按钮定义
+	SysMenuBtn {
+		// ID 按钮ID
+		ID uint `json:"ID"`
+		// CreatedAt 创建时间（RFC3339）
+		CreatedAt string `json:"CreatedAt"`
+		// UpdatedAt 更新时间（RFC3339）
+		UpdatedAt string `json:"UpdatedAt"`
+		// Name 按钮名称
+		Name string `json:"name"`
+		// Desc 按钮描述
+		Desc string `json:"desc"`
+		// ButtonId 按钮标识ID
+		ButtonId uint `json:"buttonId"`
+	}
+	// SysMenuParameter 系统菜单参数模型
+	// 菜单的地址栏参数
+	SysMenuParameter {
+		// ID 参数ID
+		ID uint `json:"ID"`
+		// SysBaseMenuID 菜单ID
+		SysBaseMenuID uint `json:"sysBaseMenuID"`
+		// Type 参数类型
+		Type string `json:"type"`
+		// Key 参数键
+		Key string `json:"key"`
+		// Value 参数值
+		Value string `json:"value"`
+	}
+	// SysAuthorityBtn 系统按钮权限模型
+	// 角色拥有的按钮权限
+	SysAuthorityBtn {
+		// ID 权限ID
+		ID uint `json:"ID"`
+		// CreatedAt 创建时间（RFC3339）
+		CreatedAt string `json:"CreatedAt"`
+		// UpdatedAt 更新时间（RFC3339）
+		UpdatedAt string `json:"UpdatedAt"`
+		// Name 权限名称
+		Name string `json:"name"`
+		// Desc 权限描述
+		Desc string `json:"desc"`
+		// BtnId 按钮ID
+		BtnId uint `json:"btnId"`
+	}
+	// SysDictionary 系统字典模型
+	// 字段与原 Gin model.SysDictionary 的 JSON 输出保持一致
+	SysDictionary {
+		// ID 字典ID
+		ID uint `json:"ID"`
+		// CreatedAt 创建时间（RFC3339）
+		CreatedAt string `json:"CreatedAt"`
+		// UpdatedAt 更新时间（RFC3339）
+		UpdatedAt string `json:"UpdatedAt"`
+		// Name 字典名称
+		Name string `json:"name"`
+		// Type 字典类型标识
+		Type string `json:"type"`
+		// Status 状态，对齐原 Gin 的 *bool
+		Status *bool `json:"status"`
+		// Desc 字典描述
+		Desc string `json:"desc"`
+		// ParentID 父级字典ID，对齐原 Gin 的 *uint
+		ParentID *uint `json:"parentID"`
+		// Children 子字典列表
+		Children []SysDictionary `json:"children"`
+	}
+	// SysDictionaryDetail 系统字典详情模型
+	// 字段与原 Gin model.SysDictionaryDetail 的 JSON 输出保持一致
+	SysDictionaryDetail {
+		// ID 详情ID
+		ID uint `json:"ID"`
+		// CreatedAt 创建时间（RFC3339）
+		CreatedAt string `json:"CreatedAt"`
+		// UpdatedAt 更新时间（RFC3339）
+		UpdatedAt string `json:"UpdatedAt"`
+		// Label 标签（显示名称）
+		Label string `json:"label"`
+		// Value 值
+		Value string `json:"value"`
+		// Extend 扩展值
+		Extend string `json:"extend"`
+		// Status 启用状态
+		Status *bool `json:"status"`
+		// Sort 排序号
+		Sort int `json:"sort"`
+		// SysDictionaryID 关联字典ID
+		SysDictionaryID int `json:"sysDictionaryID"`
+		// ParentID 父级字典详情ID
+		ParentID *uint `json:"parentID"`
+		// Children 子字典详情
+		Children []SysDictionaryDetail `json:"children"`
+		// Level 层级深度，从 0 开始
+		Level int `json:"level"`
+		// Path 层级路径，如 "1,2,3"
+		Path string `json:"path"`
+		// Disabled 禁用状态，根据 status 动态计算
+		Disabled bool `json:"disabled"`
+	}
+	// SysOperationRecord 系统操作记录模型
+	// 记录用户的操作日志
+	SysOperationRecord {
+		// ID 记录ID
+		ID uint `json:"ID"`
+		// CreatedAt 创建时间（RFC3339）
+		CreatedAt string `json:"CreatedAt"`
+		// UpdatedAt 更新时间（RFC3339）
+		UpdatedAt string `json:"UpdatedAt"`
+		// UserId 用户ID
+		UserId uint `json:"user_id"`
+		// Ip 操作IP地址
+		Ip string `json:"ip"`
+		// Method 请求方法
+		Method string `json:"method"`
+		// Path 请求路径
+		Path string `json:"path"`
+		// Agent 用户代理
+		Agent string `json:"agent"`
+		// Status 操作状态，1成功，0失败
+		Status int `json:"status"`
+		// Latency 响应延迟（毫秒）
+		Latency int64 `json:"latency"`
+		// Body 请求体
+		Body string `json:"body"`
+		// Resp 响应体
+		Resp string `json:"resp"`
+	}
+	// SysApi 系统API模型
+	// API接口定义
+	SysApi {
+		// ID API ID
+		ID uint `json:"ID"`
+		// CreatedAt 创建时间（RFC3339）
+		CreatedAt string `json:"CreatedAt"`
+		// UpdatedAt 更新时间（RFC3339）
+		UpdatedAt string `json:"UpdatedAt"`
+		// Method 请求方法
+		Method string `json:"method"`
+		// Path 请求路径
+		Path string `json:"path"`
+		// ApiGroup API分组
+		ApiGroup string `json:"apiGroup"`
+		// Description API描述
+		Description string `json:"description"`
+	}
+	// SystemConfig 系统配置模型
+	// 系统运行配置
+	SystemConfig {
+		// System 系统设置
+		System System `json:"system"`
+	}
+	// System 系统设置模型
+	// 基础系统配置项
+	System {
+		// RouterPrefix 路由前缀
+		RouterPrefix string `json:"routerPrefix"`
+		// UseMultipoint 是否启用多点登录
+		UseMultipoint bool `json:"useMultipoint"`
+		// ConfigPath 配置文件路径
+		ConfigPath string `json:"configPath"`
+	}
+	// ServerInfo 服务器信息模型
+	// 包含服务器硬件和系统信息
+	ServerInfo {
+		// Cpu CPU信息列表
+		Cpu []string `json:"cpu"`
+		// Host 主机信息
+		Host Host `json:"host"`
+		// Mem 内存信息
+		Mem Mem `json:"mem"`
+		// Os 操作系统信息
+		Os Os `json:"os"`
+		// Disk 磁盘信息列表
+		Disk []Disk `json:"disk"`
+	}
+	// Host 主机信息模型
+	// CPU详细信息
+	Host {
+		// Name 主机名
+		Name string `json:"name"`
+		// Core CPU核心数
+		Core int `json:"core"`
+		// Model CPU型号
+		Model string `json:"model"`
+		// Mhz CPU频率（MHz）
+		Mhz float64 `json:"mhz"`
+		// MaxLoadLimit 最大负载限制
+		MaxLoadLimit float64 `json:"maxLoadLimit"`
+		// IdleLoadPerc 空闲负载百分比
+		IdleLoadPerc float64 `json:"idleLoadPerc"`
+		// UserLoadPerc 用户负载百分比
+		UserLoadPerc float64 `json:"userLoadPerc"`
+		// WcpLoadPerc 系统负载百分比
+		WcpLoadPerc float64 `json:"wcpLoadPerc"`
+		// IOWait IO等待时间
+		IOWait float64 `json:"ioWait"`
+	}
+	// Mem 内存信息模型
+	// 内存使用情况
+	Mem {
+		// Total 总内存（字节）
+		Total uint64 `json:"total"`
+		// Used 已使用内存（字节）
+		Used uint64 `json:"used"`
+		// Free 空闲内存（字节）
+		Free uint64 `json:"free"`
+		// Perc 内存使用百分比
+		Perc float64 `json:"perc"`
+	}
+	// Os 操作系统信息模型
+	// 操作系统详细信息
+	Os {
+		// Arch 系统架构
+		Arch string `json:"arch"`
+		// Hostname 主机名
+		Hostname string `json:"hostname"`
+		// Kernel 内核版本
+		Kernel string `json:"kernel"`
+		// System 操作系统名称
+		System string `json:"system"`
+		// Platform 平台信息
+		Platform string `json:"platform"`
+		// Uptime 系统运行时间（秒）
+		Uptime uint64 `json:"uptime"`
+		// HostID 主机ID
+		HostID string `json:"hostID"`
+	}
+	// Disk 磁盘信息模型
+	// 磁盘使用情况
+	Disk {
+		// Path 磁盘路径
+		Path string `json:"path"`
+		// Total 总容量（字节）
+		Total uint64 `json:"total"`
+		// Free 空闲容量（字节）
+		Free uint64 `json:"free"`
+		// Used 已使用容量（字节）
+		Used uint64 `json:"used"`
+		// Inodes inode总数
+		Inodes uint64 `json:"inodes"`
+		// Perc 磁盘使用百分比
+		Perc float64 `json:"perc"`
+	}
+	// Captcha 验证码模型
+	// 验证码信息
+	Captcha {
+		// CaptchaId 验证码ID
+		CaptchaId string `json:"captchaId"`
+		// PicPath 验证码图片路径
+		PicPath string `json:"picPath"`
+		// CaptchaLength 验证码长度
+		CaptchaLength int `json:"captchaLength"`
+		// OpenCaptcha 是否开启验证码
+		OpenCaptcha bool `json:"openCaptcha"`
+	}
+	// ApiGroups API分组响应
+	// 所有API分组列表
+	ApiGroups {
+		// Groups 分组名称列表
+		Groups []string `json:"groups"`
+	}
+	// SyncApiReq 同步API请求参数
+	// 同步API接口时提交的数据
+	SyncApiReq {
+		// NewApis 新增的API列表
+		NewApis []SyncApiItem `json:"newApis,optional"`
+		// DeleteApis 删除的API列表
+		DeleteApis []SyncApiItem `json:"deleteApis,optional"`
+		// IgnoreApis 忽略的API列表
+		IgnoreApis []SyncApiItem `json:"ignoreApis,optional"`
+	}
+	// CreateApiReq 创建API请求参数
+	// 创建新API时提交的数据
+	CreateApiReq {
+		// Method 请求方法
+		Method string `json:"method"`
+		// Path 请求路径
+		Path string `json:"path"`
+		// ApiGroup API分组
+		ApiGroup string `json:"apiGroup"`
+		// Description API描述
+		Description string `json:"description"`
+	}
+	// UpdateApiReq 更新API请求参数
+	// 更新API信息时提交的数据
+	UpdateApiReq {
+		// ID API ID
+		ID uint `json:"id"`
+		// Method 请求方法
+		Method string `json:"method"`
+		// Path 请求路径
+		Path string `json:"path"`
+		// ApiGroup API分组
+		ApiGroup string `json:"apiGroup"`
+		// Description API描述
+		Description string `json:"description"`
+	}
+	// SetApiRolesReq 设置API角色请求参数
+	// 分配API给角色时提交的数据
+	SetApiRolesReq {
+		// Path API路径
+		Path string `json:"path"`
+		// Method 请求方法
+		Method string `json:"method"`
+		// AuthorityIds 角色ID列表
+		AuthorityIds []uint `json:"authorityIds"`
+	}
+	// GetAllApisReq 获取所有API请求参数
+	// 查询API列表时提交的筛选条件
+	GetAllApisReq {
+		// Method 请求方法，可选参数
+		Method string `json:"method,optional"`
+		// Path 请求路径，可选参数
+		Path string `json:"path,optional"`
+		// Description API描述，可选参数
+		Description string `json:"description,optional"`
+	}
+	// GetApiListReq 获取API列表请求参数
+	// 分页查询API列表时提交的数据
+	GetApiListReq {
+		// PageInfo 内嵌字段
+		PageInfo
+		// Method 请求方法，可选参数
+		Method string `json:"method,optional"`
+		// Path 请求路径，可选参数
+		Path string `json:"path,optional"`
+		// Description API描述，可选参数
+		Description string `json:"description,optional"`
+		// ApiGroup API分组，可选参数
+		ApiGroup string `json:"apiGroup,optional"`
+		// OrderKey 排序字段，可选参数
+		OrderKey string `json:"orderKey,optional"`
+		// Desc 排序方式，true降序，false升序，可选参数
+		Desc bool `json:"desc,optional"`
+	}
+	// ApisByAuthorityId 角色API响应
+	// 角色拥有的API列表
+	ApisByAuthorityId {
+		// Apis API列表
+		Apis []SysApi `json:"apis"`
+	}
+	// CreateAuthorityReq 创建权限请求参数
+	// 创建新角色时提交的数据
+	CreateAuthorityReq {
+		// AuthorityId 角色ID
+		AuthorityId uint `json:"authorityId"`
+		// AuthorityName 角色名称
+		AuthorityName string `json:"authorityName"`
+		// ParentId 父角色ID
+		ParentId uint `json:"parentId"`
+		// DefaultRouter 默认路由
+		DefaultRouter string `json:"defaultRouter"`
+		// DataScope 数据权限范围
+		DataScope string `json:"dataScope"`
+	}
+	// UpdateAuthorityReq 更新权限请求参数
+	// 更新角色信息时提交的数据
+	UpdateAuthorityReq {
+		// ID 角色记录ID
+		ID uint `json:"id"`
+		// AuthorityId 角色ID
+		AuthorityId uint `json:"authorityId"`
+		// AuthorityName 角色名称
+		AuthorityName string `json:"authorityName"`
+		// ParentId 父角色ID
+		ParentId uint `json:"parentId"`
+		// DefaultRouter 默认路由
+		DefaultRouter string `json:"defaultRouter"`
+		// DataScope 数据权限范围
+		DataScope string `json:"dataScope"`
+	}
+	// CopyAuthorityReq 复制权限请求参数
+	// 复制角色时提交的数据
+	CopyAuthorityReq {
+		// SysAuthority 内嵌字段
+		SysAuthority
+		// OldAuthorityId 原角色ID
+		OldAuthorityId uint `json:"oldAuthorityId"`
+	}
+	// SetDataAuthorityReq 设置数据权限请求参数
+	// 配置数据权限范围时提交的数据
+	SetDataAuthorityReq {
+		// DataScope 数据权限范围
+		DataScope string `json:"dataScope"`
+		// AuthorityId 角色ID
+		AuthorityId uint `json:"authorityId"`
+	}
+	// SetRoleUsersReq 设置角色用户请求参数
+	// 批量设置角色用户时提交的数据
+	SetRoleUsersReq {
+		// AuthorityId 角色ID
+		AuthorityId uint `json:"authorityId,optional" form:"authorityId,optional"`
+		// UserIds 用户ID列表
+		UserIds []uint `json:"userIds,optional" form:"userIds,optional"`
+	}
+	// GetAuthorityListReq 获取权限列表请求参数
+	// 分页查询角色列表时提交的数据
+	GetAuthorityListReq {
+		// PageInfo 内嵌字段
+		PageInfo
+	}
+	// UsersByAuthorityId 角色用户响应
+	// 角色下的用户列表
+	UsersByAuthorityId {
+		// Users 用户列表
+		Users []SysUser `json:"users"`
+	}
+	// UpdateCasbinReq 更新CASBIN请求参数
+	// 更新权限策略时提交的数据
+	UpdateCasbinReq {
+		// AuthorityId 角色ID
+		AuthorityId uint `json:"authorityId"`
+		// CasbinInfos 权限信息列表
+		CasbinInfos []CasbinInfo `json:"casbinInfos"`
+	}
+	// CasbinInfo CASBIN权限信息
+	// 单个权限规则
+	CasbinInfo {
+		// Path 请求路径
+		Path string `json:"path"`
+		// Method 请求方法
+		Method string `json:"method"`
+		// Roles 角色列表
+		Roles []string `json:"roles"`
+	}
+	// GetPolicyPathByAuthorityIdReq 获取CASBIN策略请求参数
+	// 查询角色权限策略时提交的数据
+	GetPolicyPathByAuthorityIdReq {
+		// AuthorityId 角色ID
+		AuthorityId string `json:"authorityId"`
+	}
+	// CasbinRes CASBIN响应
+	// 权限策略列表
+	CasbinRes {
+		// List 权限信息列表
+		List []CasbinInfo `json:"list"`
+	}
+	// AddMenuReq 添加菜单请求参数
+	// 创建新菜单时提交的数据
+	AddMenuReq {
+		// ID 菜单ID（更新时使用）
+		ID uint `json:"id,optional"`
+		// CreatedAt 创建时间戳，可选参数
+		CreatedAt int64 `json:"createdAt,optional"`
+		// UpdatedAt 更新时间戳，可选参数
+		UpdatedAt int64 `json:"updatedAt,optional"`
+		// DeletedAt 删除时间戳
+		DeletedAt int64 `json:"deletedAt,optional"`
+		// MenuLevel 菜单层级
+		MenuLevel uint `json:"menuLevel"`
+		// ParentId 父菜单ID
+		ParentId uint `json:"parentId"`
+		// Path 路由路径
+		Path string `json:"path"`
+		// Name 路由名称
+		Name string `json:"name"`
+		// Component 组件路径
+		Component string `json:"component"`
+		// Redirect 重定向路径，可选参数
+		Redirect string `json:"redirect,optional"`
+		// Title 菜单标题
+		Title string `json:"title"`
+		// Icon 菜单图标
+		Icon string `json:"icon"`
+		// Header 头部信息，可选参数
+		Header string `json:"header,optional"`
+		// KeepAlive 是否缓存
+		KeepAlive bool `json:"keepAlive"`
+		// DefaultMenu 是否默认菜单
+		DefaultMenu bool `json:"defaultMenu"`
+		// CloseTab 是否关闭标签页
+		CloseTab bool `json:"closeTab"`
+		// Hidden 是否隐藏
+		Hidden bool `json:"hidden"`
+		// Code 权限标识，可选参数
+		Code string `json:"code,optional"`
+		// Sort 排序号
+		Sort int `json:"sort"`
+		// Button 按钮列表，可选参数
+		Button []SysMenuBtn `json:"btns,optional"`
+	}
+	// AddMenuAuthorityReq 添加菜单角色请求参数
+	// 分配菜单给角色时提交的数据
+	AddMenuAuthorityReq {
+		// MenuId 菜单ID
+		MenuId uint `json:"menuId"`
+		// AuthorityId 角色ID
+		AuthorityId uint `json:"authorityId"`
+	}
+	// DeleteMenuReq 删除菜单请求参数
+	// 删除菜单时提交的数据
+	DeleteMenuReq {
+		// ID 菜单ID
+		ID uint `json:"id"`
+	}
+	// UpdateMenuReq 更新菜单请求参数
+	// 更新菜单信息时提交的数据
+	UpdateMenuReq {
+		// ID 菜单ID
+		ID uint `json:"id"`
+		// CreatedAt 创建时间戳，可选参数
+		CreatedAt int64 `json:"createdAt,optional"`
+		// UpdatedAt 更新时间戳，可选参数
+		UpdatedAt int64 `json:"updatedAt,optional"`
+		// DeletedAt 删除时间戳
+		DeletedAt int64 `json:"deletedAt,optional"`
+		// MenuLevel 菜单层级
+		MenuLevel uint `json:"menuLevel"`
+		// ParentId 父菜单ID
+		ParentId uint `json:"parentId"`
+		// Path 路由路径
+		Path string `json:"path"`
+		// Name 路由名称
+		Name string `json:"name"`
+		// Component 组件路径
+		Component string `json:"component"`
+		// Redirect 重定向路径，可选参数
+		Redirect string `json:"redirect,optional"`
+		// Title 菜单标题
+		Title string `json:"title"`
+		// Icon 菜单图标
+		Icon string `json:"icon"`
+		// Header 头部信息，可选参数
+		Header string `json:"header,optional"`
+		// KeepAlive 是否缓存
+		KeepAlive bool `json:"keepAlive"`
+		// DefaultMenu 是否默认菜单
+		DefaultMenu bool `json:"defaultMenu"`
+		// CloseTab 是否关闭标签页
+		CloseTab bool `json:"closeTab"`
+		// Hidden 是否隐藏
+		Hidden bool `json:"hidden"`
+		// Code 权限标识，可选参数
+		Code string `json:"code,optional"`
+		// Sort 排序号
+		Sort int `json:"sort"`
+		// Button 按钮列表，可选参数
+		Button []SysMenuBtn `json:"btns,optional"`
+	}
+	// SetMenuRolesReq 设置菜单角色请求参数
+	// 分配菜单权限给角色时提交的数据
+	SetMenuRolesReq {
+		// MenuId 菜单ID
+		// 原 Gin 该字段为 menuId（SetMenuAuthorities），GET /menu/getMenuRoles 亦使用同一结构体
+		MenuId uint `json:"menuId,optional" form:"menuId,optional"`
+		// AuthorityIds 角色ID列表
+		AuthorityIds []uint `json:"authorityIds,optional" form:"authorityIds,optional"`
+	}
+	// MenuRes 菜单响应
+	// 角色拥有的菜单列表
+	MenuRes {
+		// AuthorityId 角色ID
+		AuthorityId uint `json:"authorityId"`
+		// Menus 菜单列表
+		Menus []SysMenu `json:"menus"`
+	}
+	// MenuTreeRes 菜单树响应
+	// 菜单树形结构
+	MenuTreeRes {
+		// MenuTree 菜单树
+		MenuTree []SysMenu `json:"menus"`
+	}
+	// MenuRolesRes 菜单角色响应
+	// 菜单关联的角色列表，字段与响应形状与原 Gin 接口保持一致
+	MenuRolesRes {
+		// AuthorityIds 菜单已关联的角色ID列表
+		AuthorityIds []uint `json:"authorityIds"`
+		// DefaultRouterAuthorityIds 将当前菜单设为首页的角色ID列表
+		DefaultRouterAuthorityIds []uint `json:"defaultRouterAuthorityIds"`
+	}
+	// CreateSysDictionaryReq 创建字典请求参数
+	// 对齐原 Gin：ShouldBindJSON(&system.SysDictionary)，字段全部可选
+	CreateSysDictionaryReq {
+		// Name 字典名称
+		Name string `json:"name,optional"`
+		// Type 字典类型标识
+		Type string `json:"type,optional"`
+		// Status 状态
+		Status *bool `json:"status,optional"`
+		// Desc 字典描述
+		Desc string `json:"desc,optional"`
+		// ParentID 父级字典ID
+		ParentID *uint `json:"parentID,optional"`
+	}
+	// UpdateSysDictionaryReq 更新字典请求参数
+	// 对齐原 Gin：ShouldBindJSON(&system.SysDictionary)，字段全部可选
+	UpdateSysDictionaryReq {
+		// ID 字典ID
+		ID uint `json:"ID,optional"`
+		// Name 字典名称
+		Name string `json:"name,optional"`
+		// Type 字典类型标识
+		Type string `json:"type,optional"`
+		// Status 状态
+		Status *bool `json:"status,optional"`
+		// Desc 字典描述
+		Desc string `json:"desc,optional"`
+		// ParentID 父级字典ID
+		ParentID *uint `json:"parentID,optional"`
+	}
+	// DeleteSysDictionaryReq 删除字典请求参数
+	// 对齐原 Gin：ShouldBindJSON(&system.SysDictionary)，仅使用 ID
+	DeleteSysDictionaryReq {
+		// ID 字典ID
+		ID uint `json:"ID,optional"`
+	}
+	// SysDictionaryRes 字典响应
+	// 字典详细信息
+	SysDictionaryRes {
+		// ResysDictionary 字典信息，key 与原 Gin 的 gin.H{"resysDictionary": ...} 一致
+		ResysDictionary SysDictionary `json:"resysDictionary"`
+	}
+	// FindSysDictionaryReq 查找字典请求参数
+	// 原 Gin 通过 ShouldBindQuery(&system.SysDictionary) 读取 type / ID / status
+	FindSysDictionaryReq {
+		// ID 字典ID
+		ID uint `json:"ID,optional" form:"ID,optional"`
+		// Type 字典类型标识
+		Type string `json:"type,optional" form:"type,optional"`
+		// Status 状态，nil 视为 true
+		Status *bool `json:"status,optional" form:"status,optional"`
+	}
+	// ExportSysDictionaryRes 导出字典响应
+	// 字段与原 Gin ExportSysDictionary 返回的 map 一致
+	ExportSysDictionaryRes {
+		// Name 字典名称
+		Name string `json:"name"`
+		// Type 字典类型标识
+		Type string `json:"type"`
+		// Status 状态
+		Status *bool `json:"status"`
+		// Desc 字典描述
+		Desc string `json:"desc"`
+		// SysDictionaryDetails 字典详情列表（仅业务字段）
+		SysDictionaryDetails []ExportSysDictionaryDetail `json:"sysDictionaryDetails"`
+	}
+	// ExportSysDictionaryDetail 导出字典详情条目
+	ExportSysDictionaryDetail {
+		// Label 标签（显示名称）
+		Label string `json:"label"`
+		// Value 值
+		Value string `json:"value"`
+		// Extend 扩展值
+		Extend string `json:"extend"`
+		// Status 启用状态
+		Status *bool `json:"status"`
+		// Sort 排序号
+		Sort int `json:"sort"`
+		// Level 层级深度
+		Level int `json:"level"`
+		// Path 层级路径
+		Path string `json:"path"`
+	}
+	// GetSysDictionaryListReq 获取字典列表请求参数
+	// 分页查询字典列表时提交的数据
+	GetSysDictionaryListReq {
+		// PageInfo 内嵌字段
+		PageInfo
+		// Name 名称
+		Name string `json:"name,optional" form:"name,optional"`
+	}
+	// CreateSysDictionaryDetailReq 创建字典详情请求参数
+	// 创建字典值时提交的数据
+	CreateSysDictionaryDetailReq {
+		// Label 标签（显示名称）
+		Label string `json:"label,optional"`
+		// Value 值
+		Value string `json:"value,optional"`
+		// Extend 扩展值
+		Extend string `json:"extend,optional"`
+		// Status 启用状态
+		Status *bool `json:"status,optional"`
+		// Sort 排序号
+		Sort int `json:"sort,optional"`
+		// SysDictionaryID 关联字典ID
+		SysDictionaryID int `json:"sysDictionaryID,optional"`
+		// ParentID 父级字典详情ID
+		ParentID *uint `json:"parentID,optional"`
+	}
+	// UpdateSysDictionaryDetailReq 更新字典详情请求参数
+	// 对齐原 Gin：ShouldBindJSON(&system.SysDictionaryDetail)，字段全部可选
+	UpdateSysDictionaryDetailReq {
+		// ID 详情ID
+		ID uint `json:"ID,optional"`
+		// Label 标签（显示名称）
+		Label string `json:"label,optional"`
+		// Value 值
+		Value string `json:"value,optional"`
+		// Extend 扩展值
+		Extend string `json:"extend,optional"`
+		// Status 启用状态
+		Status *bool `json:"status,optional"`
+		// Sort 排序号
+		Sort int `json:"sort,optional"`
+		// SysDictionaryID 关联字典ID
+		SysDictionaryID int `json:"sysDictionaryID,optional"`
+		// ParentID 父级字典详情ID
+		ParentID *uint `json:"parentID,optional"`
+	}
+	// DeleteSysDictionaryDetailReq 删除字典详情请求参数
+	// 对齐原 Gin：ShouldBindJSON(&system.SysDictionaryDetail)，仅使用 ID
+	DeleteSysDictionaryDetailReq {
+		// ID 详情ID
+		ID uint `json:"ID,optional"`
+	}
+	// SysDictionaryDetailRes 字典详情响应
+	// 字典值详细信息
+	SysDictionaryDetailRes {
+		// ReSysDictionaryDetail 字典详情，key 与原 Gin 的 gin.H{"reSysDictionaryDetail": ...} 一致
+		ReSysDictionaryDetail SysDictionaryDetail `json:"reSysDictionaryDetail"`
+	}
+	// GetSysDictionaryDetailListReq 获取字典详情列表请求参数
+	// 分页查询字典值列表时提交的数据
+	GetSysDictionaryDetailListReq {
+		// PageInfo 内嵌字段
+		PageInfo
+		// Label 标签
+		Label string `json:"label,optional" form:"label,optional"`
+		// Value 值
+		Value string `json:"value,optional" form:"value,optional"`
+		// SysDictionaryID 字典ID
+		SysDictionaryID uint `json:"sysDictionaryID,optional" form:"sysDictionaryID,optional"`
+	}
+	// DictionaryTreeRes 字典树响应
+	// 字典树形结构
+	DictionaryTreeRes {
+		// List 字典详情树形列表，key 与原 Gin 的 gin.H{"list": ...} 一致
+		List []SysDictionaryDetail `json:"list"`
+	}
+	// GetDictionaryTreeListReq 获取字典详情树请求参数
+	// 原 Gin 通过 c.Query("sysDictionaryID") 取值
+	GetDictionaryTreeListReq {
+		// SysDictionaryID 字典ID
+		SysDictionaryID int `json:"sysDictionaryID,optional" form:"sysDictionaryID,optional"`
+	}
+	// DictionaryTree 字典树节点
+	// 字典树形结构节点
+	DictionaryTree {
+		// ID 字典ID
+		ID uint `json:"id"`
+		// Name 字典名称
+		Name string `json:"name"`
+		// Type 字典类型
+		Type string `json:"type"`
+		// Children 子字典列表
+		Children []DictionaryTree `json:"children"`
+	}
+	// DictionaryPathRes 字典路径响应
+	// 字典层级路径
+	DictionaryPathRes {
+		// Path 字典详情层级路径，key 与原 Gin 的 gin.H{"path": ...} 一致
+		Path []SysDictionaryDetail `json:"path"`
+	}
+	// DictionaryPath 字典路径节点
+	// 字典层级路径节点
+	DictionaryPath {
+		// ID 字典ID
+		ID uint `json:"id"`
+		// Name 字典名称
+		Name string `json:"name"`
+	}
+	// DeleteSysOperationRecordReq 删除操作记录请求参数
+	// 删除操作记录时提交的数据
+	DeleteSysOperationRecordReq {
+		// ID 记录ID
+		ID uint `json:"id"`
+	}
+	// DeleteSysOperationRecordByIdsReq 批量删除操作记录请求参数
+	// 批量删除操作记录时提交的数据
+	DeleteSysOperationRecordByIdsReq {
+		// Ids 记录ID列表
+		Ids []uint `json:"ids"`
+	}
+	// SysOperationRecordRes 操作记录响应
+	// 操作记录详细信息
+	SysOperationRecordRes {
+		// SysOperationRecord 操作记录
+		SysOperationRecord SysOperationRecord `json:"sysOperationRecord"`
+	}
+	// GetSysOperationRecordListReq 获取操作记录列表请求参数
+	// 分页查询操作记录时提交的数据
+	GetSysOperationRecordListReq {
+		// PageInfo 内嵌字段
+		PageInfo
+		// UserId 用户ID，可选参数
+		// 原 Gin 模型 SysOperationRecord 的 form tag 为 user_id
+		UserId uint `json:"user_id,optional" form:"user_id,optional"`
+		// Method 请求方法，可选参数
+		Method string `json:"method,optional" form:"method,optional"`
+		// Path 请求路径，可选参数
+		Path string `json:"path,optional" form:"path,optional"`
+		// Ip IP地址，可选参数
+		Ip string `json:"ip,optional" form:"ip,optional"`
+		// Agent 用户代理，可选参数
+		Agent string `json:"agent,optional" form:"agent,optional"`
+	}
+	// CreateAuthorityBtnReq 创建按钮权限请求参数
+	// 创建按钮权限时提交的数据
+	CreateAuthorityBtnReq {
+		// Name 权限名称
+		Name string `json:"name"`
+		// Desc 权限描述
+		Desc string `json:"desc"`
+		// BtnId 按钮ID
+		BtnId uint `json:"btnId"`
+	}
+	// GetAuthorityBtnReq 获取按钮权限请求参数
+	// 获取角色按钮权限时提交的数据
+	GetAuthorityBtnReq {
+		// AuthorityId 角色ID
+		AuthorityId uint `json:"authorityId"`
+		// MenuId 菜单ID
+		MenuId uint `json:"menuId"`
+	}
+	// SetAuthorityBtnReq 设置按钮权限请求参数
+	// 分配按钮权限给角色时提交的数据
+	SetAuthorityBtnReq {
+		// MenuId 菜单ID
+		MenuId uint `json:"menuId"`
+		// AuthorityId 角色ID
+		AuthorityId uint `json:"authorityId"`
+		// Selected 选中的按钮ID列表
+		Selected []uint `json:"selected"`
+	}
+	// AuthorityBtnRes 按钮权限响应
+	// 按钮权限列表
+	AuthorityBtnRes {
+		// Selected 选中的按钮ID列表
+		Selected []uint `json:"selected"`
+	}
+	// DBInfo 数据库信息模型
+	// 数据库基本信息
+	DBInfo {
+		// ID 数据库ID
+		ID uint `json:"id"`
+		// Name 数据库名称
+		Name string `json:"name"`
+		// CreatedAt 创建时间（RFC3339）
+		CreatedAt int64 `json:"createdAt"`
+	}
+	// TableInfo 数据表信息模型
+	// 数据表基本信息
+	TableInfo {
+		// ID 表ID
+		ID uint `json:"ID"`
+		// CreatedAt 创建时间（RFC3339）
+		CreatedAt string `json:"CreatedAt"`
+		// UpdatedAt 更新时间（RFC3339）
+		UpdatedAt string `json:"UpdatedAt"`
+		// TableName 表名
+		TableName string `json:"tableName"`
+		// TableComment 表注释
+		TableComment string `json:"tableComment"`
+		// Class 包名
+		Class string `json:"class"`
+		// Package 包路径
+		Package string `json:"package"`
+		// ProductModule 模块名称
+		ProductModule string `json:"productModule"`
+	}
+	// ColumnInfo 列信息模型
+	// 数据表列详细信息
+	ColumnInfo {
+		// ID 列ID
+		ID uint `json:"ID"`
+		// CreatedAt 创建时间（RFC3339）
+		CreatedAt string `json:"CreatedAt"`
+		// UpdatedAt 更新时间（RFC3339）
+		UpdatedAt string `json:"UpdatedAt"`
+		// TableId 表ID
+		TableId uint `json:"tableId"`
+		// ColumnName 列名
+		ColumnName string `json:"columnName"`
+		// DataType 数据类型
+		DataType string `json:"dataType"`
+		// DataTypeLong 数据类型长度
+		DataTypeLong string `json:"dataTypeLong"`
+		// ColumnComment 列注释
+		ColumnComment string `json:"columnComment"`
+		// ColumnType 列类型
+		ColumnType string `json:"columnType"`
+		// FieldName 字段名称
+		FieldName string `json:"field_name"`
+		// FieldJson JSON字段名
+		FieldJson string `json:"field_json"`
+		// Required 是否必填
+		Required bool `json:"required"`
+		// FieldSearchTag 搜索标签
+		FieldSearchTag string `json:"field_search_tag"`
+		// Error 错误信息
+		Error string `json:"error"`
+	}
+	// PreviewReq 预览请求参数
+	// 预览代码生成时提交的数据
+	PreviewReq {
+		// TableName 表名
+		TableName string `json:"tableName"`
+	}
+	// CreateTemplateReq 创建模板请求参数
+	// 生成代码模板时提交的数据
+	CreateTemplateReq {
+		// Name 名称
+		Name string `json:"name,optional"`
+		// TableName 表名
+		TableName string `json:"tableName,optional"`
+		// DataType 数据类型
+		DataType string `json:"dataType,optional"`
+		// DbName 数据库名称
+		DbName string `json:"dbName,optional"`
+		// PackageName 包名
+		PackageName string `json:"packageName,optional"`
+		// ModuleName 模块名称
+		ModuleName string `json:"moduleName,optional"`
+	}
+	// CreateHistoryReq 创建历史记录请求参数
+	// 创建代码生成历史记录时提交的数据
+	CreateHistoryReq {
+		// ID 历史记录ID
+		ID uint `json:"id"`
+		// Migrate 是否执行迁移
+		Migrate bool `json:"migrate"`
+		// Rollback 是否回滚
+		Rollback bool `json:"rollback"`
+	}
+	// SysAutoCodeHistory 系统代码生成历史记录模型
+	// 代码生成历史记录
+	SysAutoCodeHistory {
+		// ID 历史记录ID
+		ID uint `json:"ID"`
+		// CreatedAt 创建时间（RFC3339）
+		CreatedAt string `json:"CreatedAt"`
+		// UpdatedAt 更新时间（RFC3339）
+		UpdatedAt string `json:"UpdatedAt"`
+		// TableName 表名
+		TableName string `json:"tableName"`
+		// Voice 语音描述
+		Voice string `json:"voice"`
+		// Template 模板内容
+		Template string `json:"template"`
+		// Author 作者
+		Author string `json:"author"`
+		// Migrate 是否执行迁移
+		Migrate bool `json:"migrate"`
+		// Rollback 是否回滚
+		Rollback bool `json:"rollback"`
+	}
+	// RollBackReq 回滚请求参数
+	// 回滚代码生成时提交的数据
+	RollBackReq {
+		// ID 历史记录ID
+		ID uint `json:"id"`
+	}
+	// DeleteHistoryReq 删除历史记录请求参数
+	// 删除历史记录时提交的数据
+	DeleteHistoryReq {
+		// ID 历史记录ID
+		ID uint `json:"id"`
+	}
+	// GetHistoryListReq 获取历史记录列表请求参数
+	// 分页查询历史记录时提交的数据
+	GetHistoryListReq {
+		// PageInfo 内嵌字段
+		PageInfo
+	}
+	// PackageInfo 包信息模型
+	// 代码生成包信息
+	PackageInfo {
+		// ID 包ID
+		ID uint `json:"ID"`
+		// CreatedAt 创建时间（RFC3339）
+		CreatedAt string `json:"CreatedAt"`
+		// UpdatedAt 更新时间（RFC3339）
+		UpdatedAt string `json:"UpdatedAt"`
+		// PackageName 包名
+		PackageName string `json:"packageName"`
+		// WebPath Web路径
+		WebPath string `json:"webPath"`
+		// GoModFile Go模块文件
+		GoModFile string `json:"goModFile"`
+	}
+	// CreatePackageReq 创建包请求参数
+	// 创建代码生成包时提交的数据
+	CreatePackageReq {
+		// PackageName 包名
+		PackageName string `json:"packageName"`
+	}
+	// DeletePackageReq 删除包请求参数
+	// 删除包时提交的数据
+	DeletePackageReq {
+		// ID 包ID
+		ID uint `json:"id"`
+	}
+	// McpReq MCP请求参数
+	// MCP相关请求数据
+	McpReq  {}
+	// McpStatusRes MCP状态响应
+	// MCP服务状态信息
+	McpStatusRes {
+		// Status 状态信息
+		Status string `json:"status"`
+	}
+	// AIWorkflowSession AI工作流会话模型
+	// AI工作流会话信息
+	AIWorkflowSession {
+		// ID 会话ID
+		ID uint `json:"ID"`
+		// CreatedAt 创建时间（RFC3339）
+		CreatedAt string `json:"CreatedAt"`
+		// UpdatedAt 更新时间（RFC3339）
+		UpdatedAt string `json:"UpdatedAt"`
+		// Name 会话名称
+		Name string `json:"name"`
+		// Content 会话内容
+		Content string `json:"content"`
+		// UserId 用户ID
+		UserId uint `json:"userId"`
+	}
+	// SaveAIWorkflowSessionReq 保存AI工作流会话请求参数
+	// 保存AI工作流会话时提交的数据
+	SaveAIWorkflowSessionReq {
+		// Name 会话名称
+		Name string `json:"name"`
+		// Content 会话内容
+		Content string `json:"content"`
+	}
+	// GetAIWorkflowSessionListReq 获取AI工作流会话列表请求参数
+	// 分页查询AI工作流会话时提交的数据
+	GetAIWorkflowSessionListReq {
+		// PageInfo 内嵌字段
+		PageInfo
+	}
+	// AIWorkflowSessionDetailRes AI工作流会话详情响应
+	// AI工作流会话详细信息
+	AIWorkflowSessionDetailRes {
+		// Session 会话信息
+		Session AIWorkflowSession `json:"session"`
+	}
+	// DeleteAIWorkflowSessionReq 删除AI工作流会话请求参数
+	// 删除AI工作流会话时提交的数据
+	DeleteAIWorkflowSessionReq {
+		// ID 会话ID
+		ID uint `json:"id"`
+	}
+	// DumpAIWorkflowMarkdownReq 导出Markdown请求参数
+	// 导出AI工作流为Markdown时提交的数据
+	DumpAIWorkflowMarkdownReq {
+		// ID 会话ID
+		ID uint `json:"id"`
+	}
+	// ExportVersionReq 导出模板请求参数
+	// 导出版本模板时提交的数据
+	ExportVersionReq {
+		// ID 版本ID
+		ID uint `json:"id"`
+	}
+	// ImportVersionReq 导入模板请求参数
+	// 导入版本模板时提交的数据
+	ImportVersionReq {
+		// Version 版本号
+		Version string `json:"version"`
+		// Content 模板内容
+		Content string `json:"content"`
+	}
+	// SysVersion 系统版本模型
+	// 版本信息
+	SysVersion {
+		// ID 版本ID
+		ID uint `json:"ID"`
+		// CreatedAt 创建时间（RFC3339）
+		CreatedAt string `json:"CreatedAt"`
+		// UpdatedAt 更新时间（RFC3339）
+		UpdatedAt string `json:"UpdatedAt"`
+		// VersionName 版本名称
+		VersionName *string `json:"versionName"`
+		// VersionCode 版本号
+		VersionCode *string `json:"versionCode"`
+		// Description 版本描述
+		Description *string `json:"description"`
+		// VersionData 版本数据
+		VersionData *string `json:"versionData"`
+	}
+	// SysVersionRes 版本响应
+	// 版本详细信息
+	SysVersionRes {
+		// Version 版本信息
+		Version SysVersion `json:"version"`
+	}
+	// GetSysVersionListReq 获取版本列表请求参数
+	// 分页查询版本列表时提交的数据
+	GetSysVersionListReq {
+		// PageInfo 内嵌字段
+		PageInfo
+	}
+	// DeleteSysVersionReq 删除版本请求参数
+	// 删除版本时提交的数据
+	DeleteSysVersionReq {
+		// ID 版本ID
+		ID uint `json:"id"`
+	}
+	// SysError 系统错误日志模型
+	// 错误日志信息
+	SysError {
+		// ID 日志ID
+		ID uint `json:"ID"`
+		// CreatedAt 创建时间（RFC3339）
+		CreatedAt string `json:"CreatedAt"`
+		// UpdatedAt 更新时间（RFC3339）
+		UpdatedAt string `json:"UpdatedAt"`
+		// Form 错误来源
+		Form *string `json:"form"`
+		// Info 错误内容
+		Info *string `json:"info"`
+		// Level 日志等级
+		Level string `json:"level"`
+		// Solution 解决方案
+		Solution *string `json:"solution"`
+		// Status 处理状态
+		Status string `json:"status"`
+	}
+	// SysErrorRes 错误日志响应
+	// 错误日志详细信息
+	SysErrorRes {
+		// ErrorInfo 错误日志信息
+		ErrorInfo SysError `json:"error"`
+	}
+	// GetSysErrorListReq 获取错误日志列表请求参数
+	// 分页查询错误日志时提交的数据
+	GetSysErrorListReq {
+		// PageInfo 内嵌字段
+		PageInfo
+	}
+	// DeleteSysErrorReq 删除错误日志请求参数
+	// 删除错误日志时提交的数据
+	DeleteSysErrorReq {
+		// ID 日志ID
+		ID uint `json:"id"`
+	}
+	// DeleteSysErrorByIdsReq 批量删除错误日志请求参数
+	// 批量删除错误日志时提交的数据
+	DeleteSysErrorByIdsReq {
+		// Ids 日志ID列表
+		Ids []uint `json:"ids"`
+	}
+	// UpdateSysErrorReq 更新错误日志请求参数
+	// 更新错误日志时提交的数据
+	UpdateSysErrorReq {
+		// ID 日志ID
+		ID uint `json:"id"`
+		// Form 错误来源
+		Form *string `json:"form"`
+		// Info 错误内容
+		Info *string `json:"info"`
+		// Level 日志等级
+		Level string `json:"level"`
+		// Solution 解决方案
+		Solution *string `json:"solution"`
+		// Status 处理状态
+		Status string `json:"status"`
+	}
+	// SysLoginLog 系统登录日志模型
+	// 登录日志信息
+	SysLoginLog {
+		// ID 日志ID
+		ID uint `json:"ID"`
+		// CreatedAt 创建时间（RFC3339）
+		CreatedAt string `json:"CreatedAt"`
+		// UpdatedAt 更新时间（RFC3339）
+		UpdatedAt string `json:"UpdatedAt"`
+		// Username 用户名
+		Username string `json:"username"`
+		// Ip 登录IP地址
+		Ip string `json:"ip"`
+		// Agent 用户代理
+		Agent string `json:"agent"`
+		// Status 登录状态，true成功，false失败
+		Status bool `json:"status"`
+		// ErrorMessage 错误消息
+		ErrorMessage string `json:"errorMessage"`
+		// UserId 用户ID
+		UserId uint `json:"userId"`
+	}
+	// SysLoginLogRes 登录日志响应
+	// 登录日志详细信息
+	SysLoginLogRes {
+		// LoginLog 登录日志信息
+		LoginLog SysLoginLog `json:"loginLog"`
+	}
+	// GetLoginLogListReq 获取登录日志列表请求参数
+	// 分页查询登录日志时提交的数据
+	GetLoginLogListReq {
+		// PageInfo 内嵌字段
+		PageInfo
+		// Username 用户名，可选参数
+		// 原 Gin 模型 SysLoginLog 无 form tag，Gin 回退使用 Go 字段名，故 query key 为大写 Username
+		Username string `json:"username,optional" form:"Username,optional"`
+		// Ip IP地址，可选参数
+		Ip string `json:"ip,optional" form:"Ip,optional"`
+		// Status 登录状态，可选参数
+		Status bool `json:"status,optional" form:"Status,optional"`
+	}
+	// DeleteLoginLogReq 删除登录日志请求参数
+	// 删除登录日志时提交的数据
+	DeleteLoginLogReq {
+		// ID 日志ID
+		ID uint `json:"id"`
+	}
+	// DeleteLoginLogByIdsReq 批量删除登录日志请求参数
+	// 批量删除登录日志时提交的数据
+	DeleteLoginLogByIdsReq {
+		// Ids 日志ID列表
+		Ids []uint `json:"ids"`
+	}
+	// SysApiToken 系统API Token模型
+	// API访问令牌
+	SysApiToken {
+		// ID Token ID
+		ID uint `json:"ID"`
+		// CreatedAt 创建时间（RFC3339）
+		CreatedAt string `json:"CreatedAt"`
+		// UpdatedAt 更新时间（RFC3339）
+		UpdatedAt string `json:"UpdatedAt"`
+		// UserID 用户ID
+		UserID uint `json:"userId"`
+		// AuthorityID 角色ID
+		AuthorityID uint `json:"authorityId"`
+		// Token 访问令牌
+		Token string `json:"token"`
+		// Name 令牌名称
+		Name string `json:"name"`
+		// Status 状态
+		Status bool `json:"status"`
+		// ExpiresAt 过期时间
+		ExpiresAt string `json:"expiresAt"`
+		// Remark 备注
+		Remark string `json:"remark"`
+	}
+	// CreateApiTokenReq 创建API Token请求参数
+	// 创建API令牌时提交的数据
+	CreateApiTokenReq {
+		// Name 令牌名称
+		Name string `json:"name"`
+	}
+	// CreateApiTokenRes 创建API Token响应
+	// 创建的API令牌信息
+	CreateApiTokenRes {
+		// Token 令牌信息
+		Token SysApiToken `json:"token"`
+	}
+	// GetApiTokenListReq 获取API Token列表请求参数
+	// 分页查询API令牌列表时提交的数据
+	GetApiTokenListReq {
+		// PageInfo 内嵌字段
+		PageInfo
+	}
+	// DeleteApiTokenReq 删除API Token请求参数
+	// 删除API令牌时提交的数据
+	DeleteApiTokenReq {
+		// ID 令牌ID
+		ID uint `json:"id"`
+	}
+	// Skills 技能信息模型
+	// AI技能定义
+	Skills {
+		// ID 技能ID
+		ID uint `json:"ID"`
+		// CreatedAt 创建时间（RFC3339）
+		CreatedAt string `json:"CreatedAt"`
+		// UpdatedAt 更新时间（RFC3339）
+		UpdatedAt string `json:"UpdatedAt"`
+		// Name 技能名称
+		Name string `json:"name"`
+		// Desc 技能描述
+		Desc string `json:"desc"`
+		// Content 技能内容
+		Content string `json:"content"`
+	}
+	// SkillsRes 技能响应
+	// 技能列表
+	SkillsRes {
+		// Skills 技能列表
+		Skills []Skills `json:"skills"`
+	}
+	// SkillDetailRes 技能详情响应
+	// 技能详细信息
+	SkillDetailRes {
+		// Skill 技能信息
+		Skill Skills `json:"skill"`
+	}
+	// SaveSkillReq 保存技能请求参数
+	// 保存技能时提交的数据
+	SaveSkillReq {
+		// ID 技能ID（更新时使用），可选参数
+		ID uint `json:"id,optional"`
+		// Name 技能名称
+		Name string `json:"name"`
+		// Desc 技能描述
+		Desc string `json:"desc"`
+		// Content 技能内容
+		Content string `json:"content"`
+	}
+	// DeleteSkillReq 删除技能请求参数
+	// 删除技能时提交的数据
+	DeleteSkillReq {
+		// ID 技能ID
+		ID uint `json:"id"`
+	}
+	// GetSkillListReq 获取技能列表请求参数
+	// 分页查询技能列表时提交的数据
+	GetSkillListReq {
+		// PageInfo 内嵌字段
+		PageInfo
+	}
+	// Scripts 脚本信息模型
+	// AI脚本定义
+	Scripts {
+		// ID 脚本ID
+		ID uint `json:"ID"`
+		// CreatedAt 创建时间（RFC3339）
+		CreatedAt string `json:"CreatedAt"`
+		// UpdatedAt 更新时间（RFC3339）
+		UpdatedAt string `json:"UpdatedAt"`
+		// Name 脚本名称
+		Name string `json:"name"`
+		// Content 脚本内容
+		Content string `json:"content"`
+	}
+	// ScriptsRes 脚本响应
+	// 脚本列表
+	ScriptsRes {
+		// Scripts 脚本列表
+		Scripts []Scripts `json:"scripts"`
+	}
+	// ScriptDetailRes 脚本详情响应
+	// 脚本详细信息
+	ScriptDetailRes {
+		// Script 脚本信息
+		Script Scripts `json:"script"`
+	}
+	// SaveScriptReq 保存脚本请求参数
+	// 保存脚本时提交的数据
+	SaveScriptReq {
+		// ID 脚本ID（更新时使用），可选参数
+		ID uint `json:"id,optional"`
+		// Name 脚本名称
+		Name string `json:"name"`
+		// Content 脚本内容
+		Content string `json:"content"`
+	}
+	// CreateScriptReq 创建脚本请求参数
+	// 创建脚本时提交的数据
+	CreateScriptReq {
+		// Name 脚本名称
+		Name string `json:"name"`
+		// Content 脚本内容
+		Content string `json:"content"`
+	}
+	// GetScriptReq 获取脚本请求参数
+	// 查询脚本详情时提交的数据
+	GetScriptReq {
+		// ID 脚本ID
+		ID uint `json:"id"`
+	}
+	// Resources 资源信息模型
+	// AI资源定义
+	Resources {
+		// ID 资源ID
+		ID uint `json:"ID"`
+		// CreatedAt 创建时间（RFC3339）
+		CreatedAt string `json:"CreatedAt"`
+		// UpdatedAt 更新时间（RFC3339）
+		UpdatedAt string `json:"UpdatedAt"`
+		// Name 资源名称
+		Name string `json:"name"`
+		// Type 资源类型
+		Type string `json:"type"`
+		// Content 资源内容
+		Content string `json:"content"`
+	}
+	// ResourcesRes 资源响应
+	// 资源列表
+	ResourcesRes {
+		// Resources 资源列表
+		Resources []Resources `json:"resources"`
+	}
+	// ResourceDetailRes 资源详情响应
+	// 资源详细信息
+	ResourceDetailRes {
+		// Resource 资源信息
+		Resource Resources `json:"resource"`
+	}
+	// SaveResourceReq 保存资源请求参数
+	// 保存资源时提交的数据
+	SaveResourceReq {
+		// ID 资源ID（更新时使用），可选参数
+		ID uint `json:"id,optional"`
+		// Name 资源名称
+		Name string `json:"name"`
+		// Type 资源类型
+		Type string `json:"type"`
+		// Content 资源内容
+		Content string `json:"content"`
+	}
+	// CreateResourceReq 创建资源请求参数
+	// 创建资源时提交的数据
+	CreateResourceReq {
+		// Name 资源名称
+		Name string `json:"name"`
+		// Type 资源类型
+		Type string `json:"type"`
+		// Content 资源内容
+		Content string `json:"content"`
+	}
+	// GetResourceReq 获取资源请求参数
+	// 查询资源详情时提交的数据
+	GetResourceReq {
+		// ID 资源ID
+		ID uint `json:"id"`
+	}
+	// References 参考信息模型
+	// AI参考文档定义
+	References {
+		// ID 参考ID
+		ID uint `json:"ID"`
+		// CreatedAt 创建时间（RFC3339）
+		CreatedAt string `json:"CreatedAt"`
+		// UpdatedAt 更新时间（RFC3339）
+		UpdatedAt string `json:"UpdatedAt"`
+		// Name 参考名称
+		Name string `json:"name"`
+		// Content 参考内容
+		Content string `json:"content"`
+	}
+	// ReferencesRes 参考响应
+	// 参考文档列表
+	ReferencesRes {
+		// References 参考列表
+		References []References `json:"references"`
+	}
+	// ReferenceDetailRes 参考详情响应
+	// 参考文档详细信息
+	ReferenceDetailRes {
+		// Reference 参考信息
+		Reference References `json:"reference"`
+	}
+	// SaveReferenceReq 保存参考请求参数
+	// 保存参考文档时提交的数据
+	SaveReferenceReq {
+		// ID 参考ID（更新时使用），可选参数
+		ID uint `json:"id,optional"`
+		// Name 参考名称
+		Name string `json:"name"`
+		// Content 参考内容
+		Content string `json:"content"`
+	}
+	// CreateReferenceReq 创建参考请求参数
+	// 创建参考文档时提交的数据
+	CreateReferenceReq {
+		// Name 参考名称
+		Name string `json:"name"`
+		// Content 参考内容
+		Content string `json:"content"`
+	}
+	// GetReferenceReq 获取参考请求参数
+	// 查询参考文档详情时提交的数据
+	GetReferenceReq {
+		// ID 参考ID
+		ID uint `json:"id"`
+	}
+	// Templates 模板信息模型
+	// AI模板定义
+	Templates {
+		// ID 模板ID
+		ID uint `json:"ID"`
+		// CreatedAt 创建时间（RFC3339）
+		CreatedAt string `json:"CreatedAt"`
+		// UpdatedAt 更新时间（RFC3339）
+		UpdatedAt string `json:"UpdatedAt"`
+		// Name 模板名称
+		Name string `json:"name"`
+		// Content 模板内容
+		Content string `json:"content"`
+	}
+	// TemplatesRes 模板响应
+	// 模板列表
+	TemplatesRes {
+		// Templates 模板列表
+		Templates []Templates `json:"templates"`
+	}
+	// TemplateDetailRes 模板详情响应
+	// 模板详细信息
+	TemplateDetailRes {
+		// Template 模板信息
+		Template Templates `json:"template"`
+	}
+	// SaveTemplateReq 保存模板请求参数
+	// 保存模板时提交的数据
+	SaveTemplateReq {
+		// ID 模板ID（更新时使用），可选参数
+		ID uint `json:"id,optional"`
+		// Name 模板名称
+		Name string `json:"name"`
+		// Content 模板内容
+		Content string `json:"content"`
+	}
+	// CreateTemplateReq 创建模板请求参数
+	// 创建模板时提交的数据
+	AddFuncReq {
+		// Name 模板名称
+		Name string `json:"name"`
+		// Content 模板内容
+		Content string `json:"content"`
+	}
+	// GetTemplateReq 获取模板请求参数
+	// 查询模板详情时提交的数据
+	GetTemplateReq {
+		// ID 模板ID
+		ID uint `json:"id"`
+	}
+	// GlobalConstraint 全局约束模型
+	// AI全局约束配置
+	GlobalConstraint {
+		// ID 约束ID
+		ID uint `json:"ID"`
+		// CreatedAt 创建时间（RFC3339）
+		CreatedAt string `json:"CreatedAt"`
+		// UpdatedAt 更新时间（RFC3339）
+		UpdatedAt string `json:"UpdatedAt"`
+		// Content 约束内容
+		Content string `json:"content"`
+	}
+	// GlobalConstraintRes 全局约束响应
+	// 全局约束详细信息
+	GlobalConstraintRes {
+		// Constraint 约束信息
+		Constraint GlobalConstraint `json:"constraint"`
+	}
+	// SaveGlobalConstraintReq 保存全局约束请求参数
+	// 保存全局约束时提交的数据
+	SaveGlobalConstraintReq {
+		// Content 约束内容
+		Content string `json:"content"`
+	}
+	// PackageSkillReq 打包技能请求参数
+	// 打包技能时提交的数据
+	PackageSkillReq {
+		// ID 技能ID
+		ID uint `json:"id"`
+	}
+	// DownloadOnlineSkillReq 下载在线技能请求参数
+	// 下载在线技能时提交的数据
+	DownloadOnlineSkillReq {
+		// Url 技能下载地址
+		Url string `json:"url"`
+	}
+	// DownloadOnlineSkillRes 下载在线技能响应
+	// 下载结果
+	DownloadOnlineSkillRes {
+		// Success 是否成功
+		Success bool `json:"success"`
+	}
+)
+
+// 公告模块类型定义
+type (
+	// AnnouncementInfo 公告信息模型
+	// 包含公告的基本信息和关联数据
+	AnnouncementInfo {
+		// ID 公告ID
+		ID uint `json:"ID"`
+		// CreatedAt 创建时间（RFC3339）
+		CreatedAt string `json:"CreatedAt"`
+		// UpdatedAt 更新时间（RFC3339）
+		UpdatedAt string `json:"UpdatedAt"`
+		// Title 公告标题
+		Title string `json:"title"`
+		// Content 公告内容
+		Content string `json:"content"`
+		// UserID 发布者用户ID，可选参数
+		UserID *int `json:"userID"`
+		// Attachments 附件JSON字符串
+		Attachments string `json:"attachments"`
+	}
+	// CreateAnnouncementInfoReq 创建公告请求参数
+	// 创建新公告时提交的数据
+	CreateAnnouncementInfoReq {
+		// Title 公告标题
+		Title string `json:"title"`
+		// Content 公告内容
+		Content string `json:"content"`
+		// UserID 发布者用户ID，可选参数
+		UserID *int `json:"userID,optional"`
+		// Attachments 附件，可选参数
+		Attachments string `json:"attachments,optional"`
+	}
+	// UpdateAnnouncementInfoReq 更新公告请求参数
+	// 更新公告信息时提交的数据
+	UpdateAnnouncementInfoReq {
+		// ID 公告ID
+		ID uint `json:"ID"`
+		// Title 公告标题
+		Title string `json:"title"`
+		// Content 公告内容
+		Content string `json:"content"`
+		// UserID 发布者用户ID，可选参数
+		UserID *int `json:"userID,optional"`
+		// Attachments 附件，可选参数
+		Attachments string `json:"attachments,optional"`
+	}
+	// DeleteAnnouncementInfoReq 删除公告请求参数
+	// 删除公告时提交的数据
+	DeleteAnnouncementInfoReq {
+		// ID 公告ID
+		ID uint `json:"ID"`
+	}
+	// DeleteAnnouncementInfoByIdsReq 批量删除公告请求参数
+	// 批量删除公告时提交的数据
+	DeleteAnnouncementInfoByIdsReq {
+		// IDs 公告ID列表
+		IDs []uint `json:"IDs"`
+	}
+	// FindAnnouncementInfoReq 查找公告请求参数
+	// 根据ID获取公告详情时提交的数据
+	FindAnnouncementInfoReq {
+		// ID 公告ID
+		ID *uint `json:"ID,optional" form:"ID,optional"`
+	}
+	// GetAnnouncementInfoListReq 获取公告列表请求参数
+	// 分页查询公告列表时提交的数据
+	GetAnnouncementInfoListReq {
+		// PageInfo 内嵌字段
+		PageInfo
+		// StartCreatedAt 创建时间起始范围，可选参数
+		StartCreatedAt string `json:"startCreatedAt,optional" form:"startCreatedAt,optional"`
+		// EndCreatedAt 创建时间结束范围，可选参数
+		EndCreatedAt string `json:"endCreatedAt,optional" form:"endCreatedAt,optional"`
+	}
+	// AnnouncementInfoRes 公告响应
+	// 公告详细信息
+	AnnouncementInfoRes {
+		// Info 公告信息
+		Info AnnouncementInfo `json:"info"`
+	}
+	// InfoDataSourceItem 信息数据源条目
+	// 用于下拉选择的数据源
+	InfoDataSourceItem {
+		// Label 显示名称
+		Label string `json:"label"`
+		// Value 值
+		Value uint `json:"value"`
+	}
+	// GetInfoPublicRes 获取公开信息响应
+	// 公开接口返回的数据结构
+	GetInfoPublicRes {
+		// Success 是否成功
+		Success bool `json:"success"`
+		// Data 数据源条目
+		Data InfoDataSourceItem `json:"data"`
+	}
+)
+
+// 示例模块类型定义
+type (
+	// ExaCustomer 示例客户模型
+	// 示例客户信息
+	ExaCustomer {
+		// ID 客户ID
+		ID uint `json:"ID"`
+		// CreatedAt 创建时间（RFC3339）
+		CreatedAt string `json:"CreatedAt"`
+		// UpdatedAt 更新时间（RFC3339）
+		UpdatedAt string `json:"UpdatedAt"`
+		// CustomerName 客户名称
+		CustomerName string `json:"customerName"`
+		// CustomerPhoneData 客户电话
+		CustomerPhoneData string `json:"customerPhoneData"`
+		// SysUserID 管理用户ID
+		SysUserID uint `json:"sysUserId"`
+		// SysUserAuthorityID 管理角色ID
+		SysUserAuthorityID uint `json:"sysUserAuthorityID"`
+		// SysUser 关联用户信息
+		SysUser SysUser `json:"sysUser"`
+	}
+	// ExaCustomerRes 示例客户响应
+	// 客户详细信息
+	ExaCustomerRes {
+		// Customer 客户信息
+		Customer ExaCustomer `json:"customer"`
+	}
+	// GetExaCustomerListReq 获取客户列表请求参数
+	// 分页查询客户列表时提交的数据
+	GetExaCustomerListReq {
+		// PageInfo 内嵌字段
+		PageInfo
+	}
+	// CreateExaCustomerReq 创建客户请求参数
+	// 创建客户时提交的数据
+	CreateExaCustomerReq {
+		// CustomerName 客户名称
+		CustomerName string `json:"customerName"`
+		// CustomerPhoneData 客户电话
+		CustomerPhoneData string `json:"customerPhoneData"`
+	}
+	// UpdateExaCustomerReq 更新客户请求参数
+	// 更新客户信息时提交的数据
+	UpdateExaCustomerReq {
+		// ID 客户ID
+		ID uint `json:"id"`
+		// CustomerName 客户名称
+		CustomerName string `json:"customerName"`
+		// CustomerPhoneData 客户电话
+		CustomerPhoneData string `json:"customerPhoneData"`
+	}
+	// ExaFileUploadAndDownload 文件上传下载模型
+	// 文件信息
+	ExaFileUploadAndDownload {
+		// ID 文件ID
+		ID uint `json:"ID"`
+		// CreatedAt 创建时间（RFC3339）
+		CreatedAt string `json:"CreatedAt"`
+		// UpdatedAt 更新时间（RFC3339）
+		UpdatedAt string `json:"UpdatedAt"`
+		// Name 文件名
+		Name string `json:"name"`
+		// ClassId 分类ID
+		ClassId int `json:"classId"`
+		// Url 文件URL
+		Url string `json:"url"`
+		// Tag 标签
+		Tag string `json:"tag"`
+		// Key 文件Key
+		Key string `json:"key"`
+		// Size 文件大小（字节）
+		Size int64 `json:"size"`
+	}
+	// ExaFileRes 文件响应
+	// 文件详细信息
+	ExaFileRes {
+		// File 文件信息
+		File ExaFileUploadAndDownload `json:"file"`
+	}
+	// GetExaFileListReq 获取文件列表请求参数
+	// 分页查询文件列表时提交的数据
+	GetExaFileListReq {
+		// PageInfo 内嵌字段
+		PageInfo
+	}
+	// EditFileNameReq 编辑文件名请求参数
+	// 编辑文件名或备注时提交的数据
+	EditFileNameReq {
+		// ID 文件ID
+		ID uint `json:"id"`
+		// Name 文件名
+		Name string `json:"name"`
+	}
+	// BreakpointContinueReq 断点续传请求参数
+	// 断点续传时提交的数据
+	BreakpointContinueReq {
+		// File 文件信息
+		File string `json:"file"`
+		// SliceNum 切片序号
+		SliceNum int `json:"sliceNum"`
+		// SliceSize 切片大小
+		SliceSize int64 `json:"sliceSize"`
+		// FileSize 文件总大小
+		FileSize int64 `json:"fileSize"`
+		// Md5 文件MD5
+		Md5 string `json:"md5"`
+		// FileName 文件名
+		FileName string `json:"fileName"`
+	}
+	// BreakpointContinueFinishReq 断点续传完成请求参数
+	// 切片传输完成时提交的数据
+	BreakpointContinueFinishReq {
+		// FileMd5 文件MD5
+		FileMd5 string `json:"fileMd5"`
+		// SliceNum 切片总数
+		SliceNum int `json:"sliceNum"`
+		// File 文件信息
+		File string `json:"file"`
+		// FileName 文件名
+		FileName string `json:"fileName"`
+	}
+	// RemoveChunkReq 删除切片请求参数
+	// 删除切片时提交的数据
+	RemoveChunkReq {
+		// FileMd5 文件MD5
+		FileMd5 string `json:"fileMd5"`
+	}
+	// ImportFileUrlReq 导入URL请求参数
+	// 通过URL导入文件时提交的数据
+	ImportFileUrlReq {
+		// Url 文件URL
+		Url string `json:"url"`
+	}
+	// ExaAttachmentCategory 附件分类模型
+	// 附件分类信息
+	ExaAttachmentCategory {
+		// ID 分类ID
+		ID uint `json:"ID"`
+		// CreatedAt 创建时间（RFC3339）
+		CreatedAt string `json:"CreatedAt"`
+		// UpdatedAt 更新时间（RFC3339）
+		UpdatedAt string `json:"UpdatedAt"`
+		// Name 分类名称
+		Name string `json:"name"`
+		// Pid 父节点ID
+		Pid uint `json:"pid"`
+		// Children 子分类，仅在获取分类列表时填充
+		Children []ExaAttachmentCategory `json:"children"`
+	}
+	// ExaAttachmentCategoryRes 附件分类响应
+	// 附件分类详细信息
+	ExaAttachmentCategoryRes {
+		// Category 分类信息
+		Category ExaAttachmentCategory `json:"category"`
+	}
+	// GetDictionaryDetailsByParentReq 按父级获取字典详情请求
+	// 根据字典ID与父级ID查询字典详情
+	GetDictionaryDetailsByParentReq {
+		// SysDictionaryID 字典ID
+		// 原 Gin 请求结构体 GetDictionaryDetailsByParentRequest 的字段
+		SysDictionaryID int `json:"sysDictionaryID,optional" form:"sysDictionaryID,optional"`
+		// ParentID 父级字典ID，可选参数
+		ParentID *uint `json:"parentID,optional" form:"parentID,optional"`
+		// IncludeChildren 是否包含子级，可选参数
+		IncludeChildren bool `json:"includeChildren,optional" form:"includeChildren,optional"`
+	}
+	// GetApiRolesReq 获取API关联角色请求
+	// 根据API路径和请求方法查询已关联的角色
+	// 原 Gin 通过 c.Query("path") / c.Query("method") 取值
+	GetApiRolesReq {
+		// Path API路径
+		Path string `json:"path,optional" form:"path,optional"`
+		// Method 请求方法
+		Method string `json:"method,optional" form:"method,optional"`
+	}
+	// GetDictionaryTreeListByTypeReq 按字典类型获取层级字典树请求
+	// 原 Gin 通过 c.Query("type") 取值
+	GetDictionaryTreeListByTypeReq {
+		// Type 字典类型标识
+		Type string `json:"type,optional" form:"type,optional"`
+	}
+	// ExportTemplateReq 导出模板请求
+	// 原 Gin 导出相关接口通过 c.Query("templateID") 取值
+	ExportTemplateReq {
+		// TemplateID 模板标识
+		TemplateID string `json:"templateID,optional" form:"templateID,optional"`
+	}
+	// ImportSysDictionaryReq 导入字典请求
+	// 导入字典时提交的JSON数据
+	ImportSysDictionaryReq {
+		// Json 字典JSON内容
+		Json string `json:"json"`
+	}
+	// ImportSysDictionaryData 导入字典 JSON 数据结构
+	// 对齐原 Gin 反序列化目标 system.SysDictionary，保留 ID / parentID 以还原父子层级
+	ImportSysDictionaryData {
+		// Name 字典名称
+		Name string `json:"name"`
+		// Type 字典类型标识
+		Type string `json:"type"`
+		// Status 状态
+		Status *bool `json:"status"`
+		// Desc 字典描述
+		Desc string `json:"desc"`
+		// SysDictionaryDetails 字典详情列表
+		SysDictionaryDetails []SysDictionaryDetail `json:"sysDictionaryDetails"`
+	}
+	// SyncApiItem 同步API条目
+	// 单个待同步/待忽略的API定义
+	SyncApiItem {
+		// Path API路径
+		Path string `json:"path"`
+		// Method 请求方法
+		Method string `json:"method"`
+	}
+	// SyncApiResp 同步API响应
+	// 同步结果中的新增、删除、忽略API列表
+	SyncApiResp {
+		// NewApis 新增的API列表
+		NewApis []SysApi `json:"newApis"`
+		// DeleteApis 删除的API列表
+		DeleteApis []SysApi `json:"deleteApis"`
+		// IgnoreApis 忽略的API列表
+		IgnoreApis []SysApi `json:"ignoreApis"`
+	}
+	// CreateSysParamsReq 创建参数配置请求
+	// 新增系统参数时提交的数据
+	CreateSysParamsReq {
+		// Name 参数名称
+		Name string `json:"name"`
+		// Key 参数键名
+		Key string `json:"key"`
+		// Value 参数值
+		Value string `json:"value"`
+		// Desc 参数描述
+		Desc string `json:"desc"`
+	}
+	// UpdateSysParamsReq 更新参数配置请求
+	// 更新系统参数时提交的数据
+	UpdateSysParamsReq {
+		// ID 参数ID
+		ID uint `json:"id"`
+		// Name 参数名称
+		Name string `json:"name"`
+		// Key 参数键名
+		Key string `json:"key"`
+		// Value 参数值
+		Value string `json:"value"`
+		// Desc 参数描述
+		Desc string `json:"desc"`
+	}
+	// CreateSysErrorReq 创建错误日志请求
+	// 新增错误日志时提交的数据
+	CreateSysErrorReq {
+		// Form 错误来源
+		Form *string `json:"form"`
+		// Info 错误信息
+		Info *string `json:"info"`
+		// Level 错误级别
+		Level string `json:"level"`
+		// Solution 解决方案
+		Solution *string `json:"solution"`
+		// Status 处理状态
+		Status string `json:"status"`
+	}
+)
+
+// 邮件模块类型定义
+type (
+	// EmailSendReq 发送邮件请求参数
+	// 发送邮件时提交的数据
+	EmailSendReq {
+		// To 收件人邮箱，多个用逗号分隔
+		To string `json:"to"`
+		// Subject 邮件主题
+		Subject string `json:"subject"`
+		// Body 邮件正文
+		Body string `json:"body"`
+	}
+)
+
+// ==================== 服务定义 ====================
+// 公共路由配置
+@server (
+	group: base
+)
+service admin-api {
+	// Health 健康检查接口
+	// 用于检查服务是否正常运行
+	@handler Health
+	get /health
+
+	// Login 用户登录接口
+	// 验证用户名密码并返回JWT令牌
+	@handler Login
+	post /base/login (LoginReq) returns (LoginResp)
+
+	// Captcha 获取验证码接口
+	// 生成并返回验证码图片
+	@handler Captcha
+	post /base/captcha returns (Captcha)
+
+	// InitDB 初始化数据库接口
+	// 执行数据库初始化操作
+	@handler InitDB
+	post /init/initdb
+
+	// CheckDB 检查数据库接口
+	// 检查数据库连接和状态
+	@handler CheckDB
+	post /init/checkdb
+}
+
+// 用户路由配置
+@server (
+	group:      user
+	prefix:     /user
+	middleware: CasbinHandler
+)
+service admin-api {
+	// Register 管理员注册接口
+	// 管理员创建新用户账号
+	@handler Register
+	post /admin_register (RegisterReq) returns (SysUserResponse)
+
+	// ChangePassword 修改密码接口
+	// 用户修改自己的密码
+	@handler ChangePassword
+	post /changePassword (ChangePasswordReq) returns (Response)
+
+	// SetUserAuthority 设置用户权限接口
+	// 更改用户的角色权限
+	@handler SetUserAuthority
+	post /setUserAuthority (SetUserAuthReq) returns (Response)
+
+	// DeleteUser 删除用户接口
+	// 删除指定用户账号
+	@handler DeleteUser
+	delete /deleteUser (GetById) returns (Response)
+
+	// SetUserInfo 设置用户信息接口
+	// 更新用户的基本信息
+	@handler SetUserInfo
+	put /setUserInfo (ChangeUserInfoReq) returns (Response)
+
+	// SetSelfInfo 设置自身信息接口
+	// 用户更新自己的信息
+	@handler SetSelfInfo
+	put /setSelfInfo (ChangeUserInfoReq) returns (Response)
+
+	// SetUserAuthorities 设置用户权限组接口
+	// 批量设置用户的角色权限
+	@handler SetUserAuthorities
+	post /setUserAuthorities (SetUserAuthoritiesReq) returns (Response)
+
+	// ResetPassword 重置密码接口
+	// 管理员重置用户密码
+	@handler ResetPassword
+	post /resetPassword (ResetPasswordReq) returns (Response)
+
+	// SetSelfSetting 设置自身配置接口
+	// 用户更新自己的界面配置
+	@handler SetSelfSetting
+	put /setSelfSetting
+
+	// GetUserList 获取用户列表接口
+	// 分页查询用户列表
+	@handler GetUserList
+	post /getUserList (GetUserListReq) returns (PageResult)
+
+	// GetUserInfo 获取用户信息接口
+	// 获取当前登录用户的信息
+	@handler GetUserInfo
+	get /getUserInfo returns (UserInfoRes)
+}
+
+// JWT路由配置
+@server (
+	group:      jwt
+	prefix:     /jwt
+	middleware: CasbinHandler
+)
+service admin-api {
+	// JsonInBlacklist JWT加入黑名单接口
+	// 将当前请求携带的 JWT 加入黑名单，token 取自请求头，原 Gin 接口无入参
+	@handler JsonInBlacklist
+	post /jsonInBlacklist returns (Response)
+}
+
+// API管理路由配置
+@server (
+	group:      api
+	prefix:     /api
+	middleware: CasbinHandler
+)
+service admin-api {
+	// GetApiGroups 获取API分组接口
+	// 获取所有API分组列表
+	@handler GetApiGroups
+	get /getApiGroups returns (ApiGroups)
+
+	// SyncApi 同步API接口
+	// 同步API接口信息
+	@handler SyncApi
+	get /syncApi (SyncApiReq) returns (Response)
+
+	// IgnoreApi 忽略API接口
+	// 忽略指定API接口
+	@handler IgnoreApi
+	post /ignoreApi
+
+	// EnterSyncApi 进入同步API接口
+	// 进入API同步模式
+	@handler EnterSyncApi
+	post /enterSyncApi
+
+	// CreateApi 创建API接口
+	// 创建新的API接口定义
+	@handler CreateApi
+	post /createApi (CreateApiReq) returns (Response)
+
+	// DeleteApi 删除API接口
+	// 删除指定API接口
+	@handler DeleteApi
+	post /deleteApi (GetById) returns (Response)
+
+	// GetApiById 获取API详情接口
+	// 根据ID获取API详细信息
+	@handler GetApiById
+	post /getApiById (GetById) returns (SysApi)
+
+	// UpdateApi 更新API接口
+	// 更新API接口信息
+	@handler UpdateApi
+	post /updateApi (UpdateApiReq) returns (Response)
+
+	// DeleteApisByIds 批量删除API接口
+	// 批量删除API接口
+	@handler DeleteApisByIds
+	delete /deleteApisByIds (IdsReq) returns (Response)
+
+	// SetApiRoles 设置API角色接口
+	// 分配API给角色
+	@handler SetApiRoles
+	post /setApiRoles (SetApiRolesReq) returns (Response)
+
+	// GetAllApis 获取所有API接口
+	// 获取所有API列表
+	@handler GetAllApis
+	post /getAllApis (GetAllApisReq) returns ([]SysApi)
+
+	// GetApiList 获取API列表接口
+	// 分页查询API列表
+	@handler GetApiList
+	post /getApiList (GetApiListReq) returns (PageResult)
+
+	// GetApiRoles 获取API角色接口
+	// 获取API关联的角色ID列表（原 Gin 返回 []uint）
+	@handler GetApiRoles
+	get /getApiRoles (GetApiRolesReq) returns ([]uint)
+
+	// FreshCasbin 刷新Casbin接口
+	// 刷新权限策略缓存
+	@handler FreshCasbin
+	get /freshCasbin returns (Response)
+}
+
+// 权限管理路由配置
+@server (
+	group:      authority
+	prefix:     /authority
+	middleware: CasbinHandler
+)
+service admin-api {
+	// CreateAuthority 创建权限接口
+	// 创建新的角色权限
+	@handler CreateAuthority
+	post /createAuthority (CreateAuthorityReq) returns (Response)
+
+	// DeleteAuthority 删除权限接口
+	// 删除指定角色权限
+	@handler DeleteAuthority
+	post /deleteAuthority (GetById) returns (Response)
+
+	// UpdateAuthority 更新权限接口
+	// 更新角色权限信息
+	@handler UpdateAuthority
+	put /updateAuthority (UpdateAuthorityReq) returns (Response)
+
+	// CopyAuthority 复制权限接口
+	// 复制角色权限配置
+	@handler CopyAuthority
+	post /copyAuthority (CopyAuthorityReq) returns (Response)
+
+	// SetDataAuthority 设置数据权限接口
+	// 配置角色的数据权限范围
+	@handler SetDataAuthority
+	post /setDataAuthority (SetDataAuthorityReq) returns (Response)
+
+	// SetRoleUsers 设置角色用户接口
+	// 批量设置角色的用户列表
+	@handler SetRoleUsers
+	post /setRoleUsers (SetRoleUsersReq) returns (Response)
+
+	// GetAuthorityList 获取权限列表接口
+	// 分页查询角色权限列表
+	@handler GetAuthorityList
+	post /getAuthorityList (GetAuthorityListReq) returns (PageResult)
+
+	// GetUsersByAuthority 获取角色用户接口
+	// 获取角色下的用户ID列表（原 Gin 返回 []uint）
+	@handler GetUsersByAuthority
+	get /getUsersByAuthority (SetRoleUsersReq) returns ([]uint)
+}
+
+// 菜单管理路由配置
+@server (
+	group:      menu
+	prefix:     /menu
+	middleware: CasbinHandler
+)
+service admin-api {
+	// AddBaseMenu 添加菜单接口
+	// 创建新的菜单项
+	@handler AddBaseMenu
+	post /addBaseMenu (AddMenuReq) returns (Response)
+
+	// AddMenuAuthority 添加菜单权限接口
+	// 分配菜单给角色
+	@handler AddMenuAuthority
+	post /addMenuAuthority (AddMenuAuthorityReq) returns (Response)
+
+	// DeleteBaseMenu 删除菜单接口
+	// 删除指定菜单项
+	@handler DeleteBaseMenu
+	post /deleteBaseMenu (DeleteMenuReq) returns (Response)
+
+	// UpdateBaseMenu 更新菜单接口
+	// 更新菜单信息
+	@handler UpdateBaseMenu
+	post /updateBaseMenu (UpdateMenuReq) returns (Response)
+
+	// SetMenuRoles 设置菜单角色接口
+	// 分配菜单权限给多个角色
+	@handler SetMenuRoles
+	post /setMenuRoles (SetMenuRolesReq) returns (Response)
+
+	// GetMenu 获取菜单接口
+	// 获取当前登录用户角色的动态路由菜单，authorityId 取自 JWT 上下文，原 Gin 接口无入参
+	@handler GetMenu
+	post /getMenu returns (MenuRes)
+
+	// GetMenuList 获取菜单列表接口
+	// 获取菜单列表
+	@handler GetMenuList
+	post /getMenuList (GetById) returns ([]SysMenu)
+
+	// GetBaseMenuTree 获取菜单树接口
+	// 获取菜单树形结构
+	@handler GetBaseMenuTree
+	post /getBaseMenuTree returns (MenuTreeRes)
+
+	// GetMenuAuthority 获取菜单权限接口
+	// 获取菜单关联的权限
+	@handler GetMenuAuthority
+	post /getMenuAuthority (GetById) returns (MenuRes)
+
+	// GetBaseMenuById 根据ID获取菜单接口
+	// 根据ID获取菜单详细信息
+	@handler GetBaseMenuById
+	post /getBaseMenuById (GetById) returns (SysMenu)
+
+	// GetMenuRoles 获取菜单角色接口
+	// 获取菜单关联的角色列表
+	@handler GetMenuRoles
+	get /getMenuRoles (SetMenuRolesReq) returns (MenuRolesRes)
+}
+
+// CASBIN管理路由配置
+@server (
+	group:      casbin
+	prefix:     /casbin
+	middleware: CasbinHandler
+)
+service admin-api {
+	// UpdateCasbin 更新Casbin接口
+	// 更新角色的权限策略
+	@handler UpdateCasbin
+	post /updateCasbin (UpdateCasbinReq) returns (Response)
+
+	// GetPolicyPathByAuthorityId 获取权限策略接口
+	// 根据角色ID获取权限策略列表
+	@handler GetPolicyPathByAuthorityId
+	post /getPolicyPathByAuthorityId (GetPolicyPathByAuthorityIdReq) returns (CasbinRes)
+}
+
+// 字典管理路由配置
+@server (
+	group:      sysDictionary
+	prefix:     /sysDictionary
+	middleware: CasbinHandler
+)
+service admin-api {
+	// CreateSysDictionary 创建字典接口
+	// 创建新的字典类型
+	@handler CreateSysDictionary
+	post /createSysDictionary (CreateSysDictionaryReq) returns (Response)
+
+	// DeleteSysDictionary 删除字典接口
+	// 删除指定字典类型
+	@handler DeleteSysDictionary
+	delete /deleteSysDictionary (DeleteSysDictionaryReq) returns (Response)
+
+	// UpdateSysDictionary 更新字典接口
+	// 更新字典类型信息
+	@handler UpdateSysDictionary
+	put /updateSysDictionary (UpdateSysDictionaryReq) returns (Response)
+
+	// ImportSysDictionary 导入字典接口
+	// 导入字典数据
+	@handler ImportSysDictionary
+	post /importSysDictionary
+
+	// ExportSysDictionary 导出字典接口
+	// 导出字典数据
+	@handler ExportSysDictionary
+	get /exportSysDictionary (GetById) returns (ExportSysDictionaryRes)
+
+	// FindSysDictionary 查找字典接口
+	// 根据ID获取字典详情
+	@handler FindSysDictionary
+	get /findSysDictionary (FindSysDictionaryReq) returns (SysDictionaryRes)
+
+	// GetSysDictionaryList 获取字典列表接口
+	// 原 Gin 直接返回数组，前端按数组消费
+	@handler GetSysDictionaryList
+	get /getSysDictionaryList (GetSysDictionaryListReq) returns ([]SysDictionary)
+}
+
+// 字典详情管理路由配置
+@server (
+	group:      sysDictionaryDetail
+	prefix:     /sysDictionaryDetail
+	middleware: CasbinHandler
+)
+service admin-api {
+	// CreateSysDictionaryDetail 创建字典详情接口
+	// 创建字典值
+	@handler CreateSysDictionaryDetail
+	post /createSysDictionaryDetail (CreateSysDictionaryDetailReq) returns (Response)
+
+	// DeleteSysDictionaryDetail 删除字典详情接口
+	// 删除字典值
+	@handler DeleteSysDictionaryDetail
+	delete /deleteSysDictionaryDetail (DeleteSysDictionaryDetailReq) returns (Response)
+
+	// UpdateSysDictionaryDetail 更新字典详情接口
+	// 更新字典值信息
+	@handler UpdateSysDictionaryDetail
+	put /updateSysDictionaryDetail (UpdateSysDictionaryDetailReq) returns (Response)
+
+	// FindSysDictionaryDetail 查找字典详情接口
+	// 根据ID获取字典值详情
+	@handler FindSysDictionaryDetail
+	get /findSysDictionaryDetail (GetById) returns (SysDictionaryDetailRes)
+
+	// GetSysDictionaryDetailList 获取字典详情列表接口
+	// 分页查询字典值列表
+	@handler GetSysDictionaryDetailList
+	get /getSysDictionaryDetailList (GetSysDictionaryDetailListReq) returns (PageResult)
+
+	// GetDictionaryTreeList 获取字典树列表接口
+	// 获取字典树形结构
+	@handler GetDictionaryTreeList
+	get /getDictionaryTreeList (GetDictionaryTreeListReq) returns (DictionaryTreeRes)
+
+	// GetDictionaryTreeListByType 按类型获取字典树列表接口
+	// 根据字典类型获取树形结构
+	@handler GetDictionaryTreeListByType
+	get /getDictionaryTreeListByType (GetDictionaryTreeListByTypeReq) returns (DictionaryTreeRes)
+
+	// GetDictionaryDetailsByParent 获取父级字典详情列表接口
+	// 获取父级字典下的子字典列表
+	@handler GetDictionaryDetailsByParent
+	get /getDictionaryDetailsByParent (GetDictionaryDetailsByParentReq) returns (DictionaryTreeRes)
+
+	// GetDictionaryPath 获取字典路径接口
+	// 获取字典的层级路径
+	@handler GetDictionaryPath
+	get /getDictionaryPath (GetByLowerId) returns (DictionaryPathRes)
+}
+
+// 公告信息管理路由配置
+@server (
+	group:      info
+	prefix:     /info
+	middleware: JwtHandler,CasbinHandler
+)
+service admin-api {
+	// CreateInfo 创建公告接口
+	// 创建新的公告信息
+	@handler CreateInfo
+	post /createInfo (CreateAnnouncementInfoReq) returns (Response)
+
+	// DeleteInfo 删除公告接口
+	// 删除指定公告
+	@handler DeleteInfo
+	delete /deleteInfo (DeleteAnnouncementInfoReq) returns (Response)
+
+	// DeleteInfoByIds 批量删除公告接口
+	// 批量删除公告
+	@handler DeleteInfoByIds
+	delete /deleteInfoByIds (DeleteAnnouncementInfoByIdsReq) returns (Response)
+
+	// UpdateInfo 更新公告接口
+	// 更新公告信息
+	@handler UpdateInfo
+	put /updateInfo (UpdateAnnouncementInfoReq) returns (Response)
+
+	// FindInfo 查找公告接口
+	// 根据ID获取公告详情
+	@handler FindInfo
+	get /findInfo (FindAnnouncementInfoReq) returns (AnnouncementInfoRes)
+
+	// GetInfoList 获取公告列表接口
+	// 分页查询公告列表
+	@handler GetInfoList
+	get /getInfoList (GetAnnouncementInfoListReq) returns (PageResult)
+
+	// GetInfoDataSource 获取公告数据源接口
+	// 获取公告关联的用户数据源列表
+	@handler GetInfoDataSource
+	get /getInfoDataSource returns ([]InfoDataSourceItem)
+
+	// GetInfoPublic 获取公开公告信息接口
+	// 获取公开的公告信息
+	@handler GetInfoPublic
+	get /getInfoPublic returns (GetInfoPublicRes)
+}
+
+// 操作记录管理路由配置
+@server (
+	group:      sysOperationRecord
+	prefix:     /sysOperationRecord
+	middleware: CasbinHandler
+)
+service admin-api {
+	// DeleteSysOperationRecord 删除操作记录接口
+	// 删除指定操作记录
+	@handler DeleteSysOperationRecord
+	delete /deleteSysOperationRecord (DeleteSysOperationRecordReq) returns (Response)
+
+	// DeleteSysOperationRecordByIds 批量删除操作记录接口
+	// 批量删除操作记录
+	@handler DeleteSysOperationRecordByIds
+	delete /deleteSysOperationRecordByIds (DeleteSysOperationRecordByIdsReq) returns (Response)
+
+	// FindSysOperationRecord 查找操作记录接口
+	// 根据ID获取操作记录详情
+	@handler FindSysOperationRecord
+	get /findSysOperationRecord (GetById) returns (SysOperationRecordRes)
+
+	// GetSysOperationRecordList 获取操作记录列表接口
+	// 分页查询操作记录列表
+	@handler GetSysOperationRecordList
+	get /getSysOperationRecordList (GetSysOperationRecordListReq) returns (PageResult)
+}
+
+// 按钮权限管理路由配置
+@server (
+	group:      authorityBtn
+	prefix:     /authorityBtn
+	middleware: CasbinHandler
+)
+service admin-api {
+	// GetAuthorityBtn 获取按钮权限接口
+	// 获取角色的按钮权限列表
+	@handler GetAuthorityBtn
+	post /getAuthorityBtn (GetAuthorityBtnReq) returns (AuthorityBtnRes)
+
+	// SetAuthorityBtn 设置按钮权限接口
+	// 分配按钮权限给角色
+	@handler SetAuthorityBtn
+	post /setAuthorityBtn (SetAuthorityBtnReq) returns (Response)
+
+	// CanRemoveAuthorityBtn 检查是否可移除按钮权限接口
+	// 检查按钮权限是否可以被移除
+	@handler CanRemoveAuthorityBtn
+	post /canRemoveAuthorityBtn (GetById) returns (Response)
+}
+
+// 自动代码路由配置
+@server (
+	group:      autoCode
+	prefix:     /autoCode
+	middleware: CasbinHandler
+)
+service admin-api {
+	// GetDB 获取数据库列表接口
+	// 获取所有数据库信息
+	@handler GetDB
+	get /getDB returns ([]DBInfo)
+
+	// GetTables 获取数据表列表接口
+	// 获取数据库中的所有表
+	@handler GetTables
+	get /getTables returns ([]TableInfo)
+
+	// GetColumn 获取列信息接口
+	// 获取数据表的所有列信息
+	@handler GetColumn
+	get /getColumn returns ([]ColumnInfo)
+
+	// Preview 预览代码接口
+	// 预览生成的代码
+	@handler Preview
+	post /preview (PreviewReq) returns (Response)
+
+	// CreateTemp 创建模板接口
+	// 创建代码生成模板
+	@handler CreateTemp
+	post /createTemp (CreateTemplateReq) returns (Response)
+
+	// AddFunc 添加功能接口
+	// 添加生成功能
+	@handler AddFunc
+	post /addFunc (AddFuncReq) returns (Response)
+
+	// Mcp MCP接口
+	// MCP相关操作
+	@handler Mcp
+	post /mcp (McpReq) returns (Response)
+
+	// McpStatus 获取MCP状态接口
+	// 获取MCP服务状态
+	@handler McpStatus
+	post /mcpStatus returns (McpStatusRes)
+
+	// McpStart 启动MCP接口
+	// 启动MCP服务
+	@handler McpStart
+	post /mcpStart returns (Response)
+
+	// McpStop 停止MCP接口
+	// 停止MCP服务
+	@handler McpStop
+	post /mcpStop returns (Response)
+
+	// McpList 获取MCP列表接口
+	// 获取MCP列表
+	@handler McpList
+	post /mcpList returns (Response)
+
+	// McpRoutes 获取MCP路由接口
+	// 获取MCP路由列表
+	@handler McpRoutes
+	post /mcpRoutes returns (Response)
+
+	// McpTest 测试MCP接口
+	// 测试MCP连接
+	@handler McpTest
+	post /mcpTest returns (Response)
+
+	// GetPackage 获取包列表接口
+	// 获取代码生成包列表
+	@handler GetPackage
+	post /getPackage returns ([]PackageInfo)
+
+	// DelPackage 删除包接口
+	// 删除代码生成包
+	@handler DelPackage
+	post /delPackage (DeletePackageReq) returns (Response)
+
+	// CreatePackage 创建包接口
+	// 创建代码生成包
+	@handler CreatePackage
+	post /createPackage (CreatePackageReq) returns (Response)
+
+	// SaveAIWorkflowSession 保存AI工作流会话接口
+	// 保存AI工作流会话
+	@handler SaveAIWorkflowSession
+	post /saveAIWorkflowSession (SaveAIWorkflowSessionReq) returns (Response)
+
+	// GetAIWorkflowSessionList 获取AI工作流会话列表接口
+	// 分页查询AI工作流会话列表
+	@handler GetAIWorkflowSessionList
+	post /getAIWorkflowSessionList (GetAIWorkflowSessionListReq) returns (PageResult)
+
+	// GetAIWorkflowSessionDetail 获取AI工作流会话详情接口
+	// 获取AI工作流会话详细信息
+	@handler GetAIWorkflowSessionDetail
+	post /getAIWorkflowSessionDetail (GetById) returns (AIWorkflowSessionDetailRes)
+
+	// DeleteAIWorkflowSession 删除AI工作流会话接口
+	// 删除AI工作流会话
+	@handler DeleteAIWorkflowSession
+	post /deleteAIWorkflowSession (DeleteAIWorkflowSessionReq) returns (Response)
+
+	// DumpAIWorkflowMarkdown 导出AI工作流Markdown接口
+	// 导出AI工作流为Markdown格式
+	@handler DumpAIWorkflowMarkdown
+	post /dumpAIWorkflowMarkdown (DumpAIWorkflowMarkdownReq) returns (Response)
+
+	// GetTemplates 获取模板列表接口
+	// 获取代码生成模板列表
+	@handler GetTemplates
+	get /getTemplates returns (Response)
+
+	// PubPlug 发布插件接口
+	// 发布插件到市场
+	@handler PubPlug
+	post /pubPlug (DeletePackageReq) returns (Response)
+
+	// InstallPlugin 安装插件接口
+	// 安装插件
+	@handler InstallPlugin
+	post /installPlugin (DeletePackageReq) returns (Response)
+
+	// RemovePlugin 移除插件接口
+	// 移除已安装的插件
+	@handler RemovePlugin
+	post /removePlugin (DeletePackageReq) returns (Response)
+
+	// GetPluginList 获取插件列表接口
+	// 获取已安装的插件列表
+	@handler GetPluginList
+	get /getPluginList returns (Response)
+
+	// LLMAuto LLM自动生成接口
+	// 使用LLM自动生成代码
+	@handler LLMAuto
+	post /llmAuto returns (Response)
+
+	// LLMAutoSSE LLM自动生成SSE接口
+	// 使用LLM自动生成代码（SSE流式）
+	@handler LLMAutoSSE
+	post /llmAutoSSE returns (Response)
+
+	// InitMenu 初始化菜单接口
+	// 初始化菜单配置
+	@handler InitMenu
+	post /initMenu (DeletePackageReq) returns (Response)
+
+	// InitAPI 初始化API接口
+	// 初始化API配置
+	@handler InitAPI
+	post /initAPI (DeletePackageReq) returns (Response)
+
+	// InitDictionary 初始化字典接口
+	// 初始化字典配置
+	@handler InitDictionary
+	post /initDictionary (DeletePackageReq) returns (Response)
+}
+
+// 自动代码历史路由配置
+@server (
+	group:      autoCodeHistory
+	prefix:     /autoCode
+	middleware: CasbinHandler
+)
+service admin-api {
+	// GetMeta 获取元数据接口
+	// 获取代码生成的元数据信息
+	@handler GetMeta
+	post /getMeta (CreateHistoryReq) returns (SysAutoCodeHistory)
+
+	// Rollback 回滚接口
+	// 回滚代码生成操作
+	@handler Rollback
+	post /rollback (RollBackReq) returns (Response)
+
+	// DelSysHistory 删除历史记录接口
+	// 删除代码生成历史记录
+	@handler DelSysHistory
+	post /delSysHistory (DeleteHistoryReq) returns (Response)
+
+	// GetSysHistory 获取历史记录列表接口
+	// 分页查询代码生成历史记录
+	@handler GetSysHistory
+	post /getSysHistory (GetHistoryListReq) returns (PageResult)
+}
+
+// 导出模板管理路由配置
+@server (
+	group:      sysExportTemplate
+	prefix:     /sysExportTemplate
+	middleware: CasbinHandler
+)
+service admin-api {
+	// CreateSysExportTemplate 创建导出模板接口
+	// 创建新的导出模板
+	@handler CreateSysExportTemplate
+	post /createSysExportTemplate returns (Response)
+
+	// DeleteSysExportTemplate 删除导出模板接口
+	// 删除指定导出模板
+	@handler DeleteSysExportTemplate
+	delete /deleteSysExportTemplate (GetById) returns (Response)
+
+	// DeleteSysExportTemplateByIds 批量删除导出模板接口
+	// 批量删除导出模板
+	@handler DeleteSysExportTemplateByIds
+	delete /deleteSysExportTemplateByIds (IdsReq) returns (Response)
+
+	// UpdateSysExportTemplate 更新导出模板接口
+	// 更新导出模板信息
+	@handler UpdateSysExportTemplate
+	put /updateSysExportTemplate returns (Response)
+
+	// ImportExcel 导入Excel接口
+	// 导入Excel数据
+	@handler ImportExcel
+	post /importExcel returns (Response)
+
+	// FindSysExportTemplate 查找导出模板接口
+	// 根据ID获取导出模板详情
+	@handler FindSysExportTemplate
+	get /findSysExportTemplate (GetById) returns (Response)
+
+	// GetSysExportTemplateList 获取导出模板列表接口
+	// 分页查询导出模板列表
+	@handler GetSysExportTemplateList
+	get /getSysExportTemplateList (PageInfo) returns (PageResult)
+
+	// ExportExcel 导出Excel接口
+	// 导出Excel数据
+	@handler ExportExcel
+	get /exportExcel (ExportTemplateReq) returns (Response)
+
+	// ExportTemplate 导出模板接口
+	// 导出模板数据
+	@handler ExportTemplate
+	get /exportTemplate (ExportTemplateReq) returns (Response)
+
+	// PreviewSQL 预览SQL接口
+	// 预览生成的SQL语句
+	@handler PreviewSQL
+	get /previewSQL (ExportTemplateReq) returns (SqlPreviewRes)
+
+	// ExportExcelByToken 通过Token导出Excel接口
+	// 使用Token导出Excel数据
+	@handler ExportExcelByToken
+	get /exportExcelByToken returns (Response)
+
+	// ExportTemplateByToken 通过Token导出模板接口
+	// 使用Token导出模板数据
+	@handler ExportTemplateByToken
+	get /exportTemplateByToken returns (Response)
+}
+
+// 参数管理路由配置
+@server (
+	group:      sysParams
+	prefix:     /sysParams
+	middleware: CasbinHandler
+)
+service admin-api {
+	// CreateSysParams 创建参数接口
+	// 创建新的系统参数
+	@handler CreateSysParams
+	post /createSysParams returns (Response)
+
+	// DeleteSysParams 删除参数接口
+	// 删除指定系统参数
+	@handler DeleteSysParams
+	delete /deleteSysParams (GetById) returns (Response)
+
+	// DeleteSysParamsByIds 批量删除参数接口
+	// 批量删除系统参数
+	@handler DeleteSysParamsByIds
+	delete /deleteSysParamsByIds (IdsReq) returns (Response)
+
+	// UpdateSysParams 更新参数接口
+	// 更新系统参数信息
+	@handler UpdateSysParams
+	put /updateSysParams returns (Response)
+
+	// FindSysParams 查找参数接口
+	// 根据ID获取系统参数详情
+	@handler FindSysParams
+	get /findSysParams (GetById) returns (Response)
+
+	// GetSysParamsList 获取参数列表接口
+	// 分页查询系统参数列表
+	@handler GetSysParamsList
+	get /getSysParamsList (PageInfo) returns (PageResult)
+
+	// GetSysParam 获取单个参数接口
+	// 根据ID获取单个系统参数
+	@handler GetSysParam
+	get /getSysParam (GetById) returns (Response)
+}
+
+// 系统管理路由配置
+@server (
+	group:      system
+	prefix:     /system
+	middleware: CasbinHandler
+)
+service admin-api {
+	// SetSystemConfig 设置系统配置接口
+	// 更新系统运行配置
+	@handler SetSystemConfig
+	post /setSystemConfig (SystemConfig) returns (Response)
+
+	// ReloadSystem 重新加载系统接口
+	// 重新加载系统配置
+	@handler ReloadSystem
+	post /reloadSystem returns (Response)
+
+	// GetSystemConfig 获取系统配置接口
+	// 获取系统运行配置
+	@handler GetSystemConfig
+	post /getSystemConfig returns (SystemConfig)
+
+	// GetServerInfo 获取服务器信息接口
+	// 获取服务器硬件和系统信息
+	@handler GetServerInfo
+	post /getServerInfo returns (ServerInfo)
+}
+
+// 版本管理路由配置
+@server (
+	group:      sysVersion
+	prefix:     /sysVersion
+	middleware: CasbinHandler
+)
+service admin-api {
+	// DeleteSysVersion 删除版本接口
+	// 删除指定版本
+	@handler DeleteSysVersion
+	delete /deleteSysVersion (DeleteSysVersionReq) returns (Response)
+
+	// DeleteSysVersionByIds 批量删除版本接口
+	// 批量删除版本
+	@handler DeleteSysVersionByIds
+	delete /deleteSysVersionByIds (IdsReq) returns (Response)
+
+	// ExportVersion 导出版本接口
+	// 导出版本数据
+	@handler ExportVersion
+	post /exportVersion (ExportVersionReq) returns (Response)
+
+	// ImportVersion 导入版本接口
+	// 导入版本数据
+	@handler ImportVersion
+	post /importVersion (ImportVersionReq) returns (Response)
+
+	// FindSysVersion 查找版本接口
+	// 根据ID获取版本详情
+	@handler FindSysVersion
+	get /findSysVersion (GetById) returns (SysVersionRes)
+
+	// GetSysVersionList 获取版本列表接口
+	// 分页查询版本列表
+	@handler GetSysVersionList
+	get /getSysVersionList (GetSysVersionListReq) returns (PageResult)
+
+	// DownloadVersionJson 下载版本JSON接口
+	// 下载版本配置JSON文件
+	@handler DownloadVersionJson
+	get /downloadVersionJson returns (Response)
+}
+
+// 错误日志管理路由配置
+@server (
+	group:      sysError
+	prefix:     /sysError
+	middleware: CasbinHandler
+)
+service admin-api {
+	// DeleteSysError 删除错误日志接口
+	// 删除指定错误日志
+	@handler DeleteSysError
+	delete /deleteSysError (DeleteSysErrorReq) returns (Response)
+
+	// DeleteSysErrorByIds 批量删除错误日志接口
+	// 批量删除错误日志
+	@handler DeleteSysErrorByIds
+	delete /deleteSysErrorByIds (DeleteSysErrorByIdsReq) returns (Response)
+
+	// UpdateSysError 更新错误日志接口
+	// 更新错误日志信息
+	@handler UpdateSysError
+	put /updateSysError (UpdateSysErrorReq) returns (Response)
+
+	// GetSysErrorSolution 获取错误解决方案接口
+	// 获取错误的解决方案
+	@handler GetSysErrorSolution
+	get /getSysErrorSolution (GetById) returns (SysErrorRes)
+
+	// FindSysError 查找错误日志接口
+	// 根据ID获取错误日志详情
+	@handler FindSysError
+	get /findSysError (GetById) returns (SysErrorRes)
+
+	// GetSysErrorList 获取错误日志列表接口
+	// 分页查询错误日志列表
+	@handler GetSysErrorList
+	get /getSysErrorList (GetSysErrorListReq) returns (PageResult)
+
+	// CreateSysError 创建错误日志接口
+	// 创建新的错误日志
+	@handler CreateSysError
+	post /createSysError returns (Response)
+}
+
+// 登录日志管理路由配置
+@server (
+	group:      sysLoginLog
+	prefix:     /sysLoginLog
+	middleware: CasbinHandler
+)
+service admin-api {
+	// DeleteLoginLog 删除登录日志接口
+	// 删除指定登录日志
+	@handler DeleteLoginLog
+	delete /deleteLoginLog (DeleteLoginLogReq) returns (Response)
+
+	// DeleteLoginLogByIds 批量删除登录日志接口
+	// 批量删除登录日志
+	@handler DeleteLoginLogByIds
+	delete /deleteLoginLogByIds (DeleteLoginLogByIdsReq) returns (Response)
+
+	// FindLoginLog 查找登录日志接口
+	// 根据ID获取登录日志详情
+	@handler FindLoginLog
+	get /findLoginLog (GetById) returns (SysLoginLogRes)
+
+	// GetLoginLogList 获取登录日志列表接口
+	// 分页查询登录日志列表
+	@handler GetLoginLogList
+	get /getLoginLogList (GetLoginLogListReq) returns (PageResult)
+}
+
+// API Token管理路由配置
+@server (
+	group:      sysApiToken
+	prefix:     /sysApiToken
+	middleware: CasbinHandler
+)
+service admin-api {
+	// CreateApiToken 创建API Token接口
+	// 创建新的API访问令牌
+	@handler CreateApiToken
+	post /createApiToken (CreateApiTokenReq) returns (CreateApiTokenRes)
+
+	// GetApiTokenList 获取API Token列表接口
+	// 分页查询API令牌列表
+	@handler GetApiTokenList
+	post /getApiTokenList (GetApiTokenListReq) returns (PageResult)
+
+	// DeleteApiToken 删除API Token接口
+	// 删除指定API令牌
+	@handler DeleteApiToken
+	post /deleteApiToken (DeleteApiTokenReq) returns (Response)
+}
+
+// 技能管理路由配置
+@server (
+	group:      skills
+	prefix:     /skills
+	middleware: CasbinHandler
+)
+service admin-api {
+	// GetTools 获取工具列表接口
+	// 获取所有可用的AI工具
+	@handler GetTools
+	get /getTools returns (Response)
+
+	// GetSkillList 获取技能列表接口
+	// 分页查询AI技能列表
+	@handler GetSkillList
+	post /getSkillList (GetSkillListReq) returns (PageResult)
+
+	// GetSkillDetail 获取技能详情接口
+	// 获取AI技能详细信息
+	@handler GetSkillDetail
+	post /getSkillDetail (GetById) returns (SkillDetailRes)
+
+	// SaveSkill 保存技能接口
+	// 保存或更新AI技能
+	@handler SaveSkill
+	post /saveSkill (SaveSkillReq) returns (Response)
+
+	// DeleteSkill 删除技能接口
+	// 删除指定AI技能
+	@handler DeleteSkill
+	post /deleteSkill (DeleteSkillReq) returns (Response)
+
+	// CreateScript 创建脚本接口
+	// 创建新的AI脚本
+	@handler CreateScript
+	post /createScript (CreateScriptReq) returns (Response)
+
+	// GetScript 获取脚本接口
+	// 获取AI脚本详细信息
+	@handler GetScript
+	post /getScript (GetScriptReq) returns (ScriptDetailRes)
+
+	// SaveScript 保存脚本接口
+	// 保存或更新AI脚本
+	@handler SaveScript
+	post /saveScript (SaveScriptReq) returns (Response)
+
+	// CreateResource 创建资源接口
+	// 创建新的AI资源
+	@handler CreateResource
+	post /createResource (CreateResourceReq) returns (Response)
+
+	// GetResource 获取资源接口
+	// 获取AI资源详细信息
+	@handler GetResource
+	post /getResource (GetResourceReq) returns (ResourceDetailRes)
+
+	// SaveResource 保存资源接口
+	// 保存或更新AI资源
+	@handler SaveResource
+	post /saveResource (SaveResourceReq) returns (Response)
+
+	// CreateReference 创建参考接口
+	// 创建新的参考文档
+	@handler CreateReference
+	post /createReference (CreateReferenceReq) returns (Response)
+
+	// GetReference 获取参考接口
+	// 获取参考文档详细信息
+	@handler GetReference
+	post /getReference (GetReferenceReq) returns (ReferenceDetailRes)
+
+	// SaveReference 保存参考接口
+	// 保存或更新参考文档
+	@handler SaveReference
+	post /saveReference (SaveReferenceReq) returns (Response)
+
+	// CreateTemplate 创建模板接口
+	// 创建新的AI模板
+	@handler CreateTemplate
+	post /createTemplate (CreateTemplateReq) returns (Response)
+
+	// GetTemplate 获取模板接口
+	// 获取AI模板详细信息
+	@handler GetTemplate
+	post /getTemplate (GetTemplateReq) returns (TemplateDetailRes)
+
+	// SaveTemplate 保存模板接口
+	// 保存或更新AI模板
+	@handler SaveTemplate
+	post /saveTemplate (SaveTemplateReq) returns (Response)
+
+	// GetGlobalConstraint 获取全局约束接口
+	// 获取AI全局约束配置
+	@handler GetGlobalConstraint
+	post /getGlobalConstraint returns (GlobalConstraintRes)
+
+	// SaveGlobalConstraint 保存全局约束接口
+	// 保存AI全局约束配置
+	@handler SaveGlobalConstraint
+	post /saveGlobalConstraint (SaveGlobalConstraintReq) returns (Response)
+
+	// PackageSkill 打包技能接口
+	// 打包AI技能
+	@handler PackageSkill
+	post /packageSkill (PackageSkillReq) returns (Response)
+
+	// DownloadOnlineSkill 下载在线技能接口
+	// 从在线地址下载AI技能
+	@handler DownloadOnlineSkill
+	post /downloadOnlineSkill (DownloadOnlineSkillReq) returns (DownloadOnlineSkillRes)
+}
+
+// 示例模块路由配置
+@server (
+	group:      example
+	prefix:     /customer
+	middleware: CasbinHandler
+)
+service admin-api {
+	// CreateCustomer 创建客户接口
+	// 创建新的客户
+	@handler CreateCustomer
+	post /customer (CreateExaCustomerReq) returns (Response)
+
+	// UpdateCustomer 更新客户接口
+	// 更新客户信息
+	@handler UpdateCustomer
+	put /customer (UpdateExaCustomerReq) returns (Response)
+
+	// DeleteCustomer 删除客户接口
+	// 删除指定客户
+	@handler DeleteCustomer
+	delete /customer (GetById) returns (Response)
+
+	// GetCustomer 获取客户接口
+	// 根据ID获取客户详情
+	@handler GetCustomer
+	get /customer (GetById) returns (ExaCustomerRes)
+
+	// GetCustomerList 获取客户列表接口
+	// 分页查询客户列表
+	@handler GetCustomerList
+	get /customerList (GetExaCustomerListReq) returns (PageResult)
+}
+
+// 文件上传下载路由定义
+@server (
+	group:      file
+	prefix:     /fileUploadAndDownload
+	middleware: CasbinHandler
+)
+service admin-api {
+	// UploadFile 上传文件接口
+	// 上传文件
+	@handler UploadFile
+	post /upload returns (ExaFileRes)
+
+	// DeleteFile 删除文件接口
+	// 删除指定文件
+	@handler DeleteFile
+	post /deleteFile (GetById) returns (Response)
+
+	// EditFileName 编辑文件名接口
+	// 编辑文件名或备注
+	@handler EditFileName
+	post /editFileName (EditFileNameReq) returns (Response)
+
+	// BreakpointContinue 断点续传接口
+	// 断点续传上传切片
+	@handler BreakpointContinue
+	post /breakpointContinue (BreakpointContinueReq) returns (Response)
+
+	// FindFile 查找文件接口
+	// 查询当前文件成功的切片
+	@handler FindFile
+	get /findFile (GetById) returns (ExaFileRes)
+
+	// BreakpointContinueFinish 断点续传完成接口
+	// 切片传输完成
+	@handler BreakpointContinueFinish
+	post /breakpointContinueFinish (BreakpointContinueFinishReq) returns (Response)
+
+	// RemoveChunk 删除切片接口
+	// 删除切片
+	@handler RemoveChunk
+	post /removeChunk (RemoveChunkReq) returns (Response)
+
+	// ImportFileUrl 导入URL接口
+	// 通过URL导入文件
+	@handler ImportFileUrl
+	post /importURL (ImportFileUrlReq) returns (ExaFileRes)
+
+	// GetFileList 获取文件列表接口
+	// 分页查询文件列表
+	@handler GetFileList
+	post /getFileList (GetExaFileListReq) returns (PageResult)
+}
+
+@server (
+	group:      attachment
+	prefix:     /attachmentCategory
+	middleware: CasbinHandler
+)
+service admin-api {
+	// GetCategoryList 获取分类列表接口
+	// 获取附件分类树，原 Gin 接口无入参，data 直接返回数组
+	@handler GetCategoryList
+	get /getCategoryList returns ([]ExaAttachmentCategory)
+
+	// AddCategory 创建分类接口
+	// 创建或编辑附件分类
+	@handler AddCategory
+	post /addCategory (ExaAttachmentCategory) returns (Response)
+
+	// DeleteCategory 删除分类接口
+	// 删除指定附件分类
+	@handler DeleteCategory
+	post /deleteCategory (GetById) returns (Response)
+}
+
+// 邮件模块路由配置
+@server (
+	group:      email
+	prefix:     /email
+	middleware: JwtHandler,CasbinHandler
+)
+service admin-api {
+	// EmailTest 测试邮件接口
+	// 发送测试邮件验证邮件服务是否正常
+	@handler EmailTest
+	post /emailTest returns (Response)
+
+	// SendEmail 发送邮件接口
+	// 向指定收件人发送邮件
+	@handler SendEmail
+	post /sendEmail (EmailSendReq) returns (Response)
+}
+

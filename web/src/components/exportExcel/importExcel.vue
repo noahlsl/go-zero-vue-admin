@@ -4,7 +4,7 @@
     :show-file-list="false"
     :on-success="handleSuccess"
     :multiple="false"
-    :headers="{'x-token': token}"
+    :headers="{'Authorization': 'Bearer ' + token}"
   >
     <el-button type="primary" icon="upload" class="ml-3"> 导入 </el-button>
   </el-upload>

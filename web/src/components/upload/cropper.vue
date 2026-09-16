@@ -8,7 +8,7 @@
       :data="{'classId': props.classId}"
       :on-success="handleImageSuccess"
       :on-change="handleFileChange"
-      :headers="{'x-token': token}"
+      :headers="{'Authorization': 'Bearer ' + token}"
   >
     <el-button type="primary" icon="crop"> 裁剪上传</el-button>
   </el-upload>

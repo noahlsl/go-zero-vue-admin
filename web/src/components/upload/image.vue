@@ -7,7 +7,7 @@
       :before-upload="beforeImageUpload"
       :multiple="false"
       :data="{'classId': props.classId}"
-      :headers="{'x-token': token}"
+      :headers="{'Authorization': 'Bearer ' + token}"
     >
       <el-button type="primary" :icon="Upload">压缩上传</el-button>
     </el-upload>

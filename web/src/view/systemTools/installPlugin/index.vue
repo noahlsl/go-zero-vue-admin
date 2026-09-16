@@ -6,7 +6,7 @@
       :show-file-list="false"
       :on-success="handleSuccess"
       :on-error="handleSuccess"
-      :headers="{'x-token': token}"
+      :headers="{'Authorization': 'Bearer ' + token}"
       name="plug"
     >
       <el-icon class="el-icon--upload"><upload-filled /></el-icon>

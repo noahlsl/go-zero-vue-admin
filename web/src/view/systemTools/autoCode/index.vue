@@ -742,7 +742,7 @@
           class="flex items-center"
           :before-upload="importJson"
           :show-file-list="false"
-          :headers="{'x-token': token}"
+          :headers="{'Authorization': 'Bearer ' + token}"
           accept=".json"
         >
           <el-button type="primary" class="mx-2" :disabled="isAdd"

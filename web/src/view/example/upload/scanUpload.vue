@@ -7,7 +7,7 @@
         accept="image/*"
         :show-file-list="false"
         :auto-upload="false"
-        :headers="{ 'x-token': token }"
+        :headers="{ 'Authorization': 'Bearer ' + token }"
         :data="{'classId': classId}"
         :on-success="handleImageSuccess"
         :on-change="handleFileChange"

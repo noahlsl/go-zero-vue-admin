@@ -1,0 +1,22 @@
+Name: admin-api
+Host: 0.0.0.0
+Port: 8888
+
+Auth:
+  AccessSecret: "go-zero-vue-admin-secret-key"
+  AccessExpire: 604800
+
+MySQL:
+  DSN: "root:123456@tcp(127.0.0.1:3306)/zero-admin?charset=utf8mb4&parseTime=True&loc=Local"
+  MaxIdleConns: 10
+  MaxOpenConns: 100
+  ConnMaxLifetime: 3600
+
+Redis:
+  - Host: 127.0.0.1:6379
+    Pass: ""
+    Type: node
+
+Log:
+  Mode: console
+  Level: info
